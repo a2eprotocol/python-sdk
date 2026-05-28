@@ -1,0 +1,29 @@
+host_id: "a2e-dev"
+
+snapshot_store:
+  type: file
+  config:
+    root: "/tmp/a2e"
+
+plugins:
+  - name: skills
+    cls: a2e.plugins.skills.SkillPlugin
+    config:
+      root: "./skills"
+      pool_size: 4
+
+  - name: memory
+    cls: a2e.plugins.memory.MemoryPlugin
+    config:
+      episodic_db_path: "/data/episodic.db"
+      semantic_db_path: "/data/semantic.db"
+
+  - name: learning
+    cls: a2e.plugins.learning.LearningPlugin
+    config:
+      strategy: "ucb1"
+
+  - name: tools
+    cls: a2e.plugins.tools.ToolPlugin
+    config:
+      allowed_tools: ["shell", "python_eval"]

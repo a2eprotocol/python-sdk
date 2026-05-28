@@ -1,0 +1,111 @@
+host_id: "a2e-dev"
+
+transport:
+  type: http
+  config:
+    base_url: "http://localhost:8765"
+    send_path: "/send"
+    stream_path: "/stream"
+
+server:
+  host: "0.0.0.0"
+  port: 8765
+
+snapshot_store:
+  type: file
+  config:
+    root: "/tmp/a2e"
+
+audit:
+  enabled: true
+  path: "/tmp/a2e/audit.log"        # omit or set null to log to logger only
+  rotate:
+    max_bytes: 10485760              # 10 MB per file
+    backup_count: 5                  # keep audit.log.1 … audit.log.5
+  session_id_source: host_id       # host_id | uuid | env  — see note below
+
+plugins:
+  - name: mymemory 
+    type: memory
+    cls: memory.inmemory.InMemoryPlugin
+
+  - name: mylearn
+    type: learn
+    cls: learn.learn.Learn
+
+  - name: mytools
+    type: tools
+    cls: tools.registry_tool_plugin.RegistryToolPlugin
+    metadata:
+      tool_modules:
+        - tools.read_file_tool
+        - tools.http_get_tool
+        - tools.python_eval_tool
+        - tools.glob_tool
+        - tools.grep_tool
+
+  - name: filesystem_skill 
+    type: skills
+    cls: skills.filesystem_skill.FilesystemSkillPlugin
+    metadata:
+        skills_path: ./skills_folder
+
+  - name: counter_env 
+    type: env
+    cls: counter_env.CounterEnv
+
+  - name: myprocs
+    type: procs
+    cls: a2e.caps.proc.plugin.ProcPlugin
+    metadata:
+      ALLOWED_COMMANDS:
+        - python3
+        - bash
+        - ls
+        - echo
+        - cat
+
+      DEFAULT_TIMEOUT: 30          # seconds
+      MAX_OUTPUT_BYTES: 1000000    # 1 MB
+      MAX_PROCS: 10                # limit concurrent processes
+      DISABLE_NETWORK: true        # if supported by runtime
+
+  - name: mymcp
+    type: mcp
+    cls: a2e.caps.mcp.plugin.MCPPlugin
+    metadata:
+      # ─────────────────────────────────────────────
+      # Registered MCP Servers
+      # ─────────────────────────────────────────────
+      servers:
+        - name: local_tools
+          transport: direct
+          metadata:
+            plugin: tools.registry_tool_plugin.RegistryToolPlugin
+            tool_modules:
+              - tools.read_file_tool
+              - tools.http_get_tool
+              - tools.python_eval_tool
+              - tools.glob_tool
+              - tools.grep_tool
+
+        - name: remote_http
+          transport: http
+          metadata:
+            base_url: "http://localhost:8081"
+            timeout: 30
+
+      # ─────────────────────────────────────────────
+      # Routing Defaults
+      # ─────────────────────────────────────────────
+      routing:
+        strategy: auto        # auto | first | round_robin | fallback
+        fallback_enabled: true
+
+      # ─────────────────────────────────────────────
+      # Observability
+      # ─────────────────────────────────────────────
+      observability:
+        track_latency: true
+        track_failures: true
+        emit_events: true

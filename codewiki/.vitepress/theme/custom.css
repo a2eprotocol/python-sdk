@@ -1,0 +1,24 @@
+/* Container framework adjustments */
+details[open] .mermaid {
+  overflow: auto !important;
+  max-width: 100% !important;
+  max-height: 70vh;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 8px;
+  background: var(--vp-c-bg-soft);
+  padding: 1.5rem;
+}
+
+/* Base state for the diagram */
+details[open] .mermaid svg {
+  cursor: zoom-in;
+  transition: transform 0.2s ease-out;
+  transform-origin: center center;
+}
+
+/* Seamless interactive zoom on click-hold */
+details[open] .mermaid svg:active {
+  cursor: grabbing;
+  transform: scale(1.8);
+}
+

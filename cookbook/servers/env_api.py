@@ -1,0 +1,29 @@
+from a2e.caps.env.client import EnvAPI
+
+
+def run_env(client):
+    env = EnvAPI(client)
+    resp = env.reset(env_name="counter_env")
+    obs = resp.obs
+    episode_id = obs.episode_id
+    done = obs.done
+    truncated = obs.truncated
+    while not env.is_done(done, truncated):
+        action = {
+            "type": "inc",
+        }
+
+        step_resp = env.step(episode_id, action)
+        print(step_resp)
+        done = step_resp.done
+        truncated = step_resp.truncated
+        #review_data = env.review(obs, {"threshold": 0.7})
+
+        # plug into workflow / learn
+        #runner.run(chain_id="eval", input_state=review_data)
+
+    resp = env.observe(episode_id=episode_id)
+    print(resp.obs)
+
+    resp = env.reset(env_name="counter_env")
+    print(resp.obs)
