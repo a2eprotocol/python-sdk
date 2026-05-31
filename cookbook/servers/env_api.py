@@ -1,8 +1,22 @@
 from a2e.caps.env.client import EnvAPI
+from a2e.caps.env.protocol import EnvStatePush
+
+
+def on_env_push(push: EnvStatePush):
+    """Receive server-initiated environment state push events."""
+    print(f"  [env.push] event_type={push.event_type} | reason={push.reason}")
+    if push.delta:
+        print(f"  [env.push] delta={push.delta}")
+    if push.terminal:
+        print(f"  [env.push] EPISODE TERMINAL")
 
 
 def run_env(client):
     env = EnvAPI(client)
+
+    # Register a push handler before starting — catches async state pushes
+    env.on_push(on_env_push)
+
     resp = env.reset(env_name="counter_env")
     obs = resp.obs
     episode_id = obs.episode_id

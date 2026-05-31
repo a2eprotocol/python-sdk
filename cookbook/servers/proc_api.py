@@ -1,8 +1,12 @@
 from a2e.caps.proc.client import ProcsAPI
+from a2e.caps.proc.protocol import ProcReadEvent
 
 
-def on_event(event):
-    print(f"[event] {event.type} | data={getattr(event, 'data', None)}")
+def on_proc_output(event: ProcReadEvent):
+    """Receive stdout/stderr chunks from a spawned process."""
+    stream = event.stream_type  # "stdout" | "stderr"
+    data = event.data.get("data", "") if isinstance(event.data, dict) else str(event.data)
+    print(f"[proc.{stream}] {data}")
 
 
 def run_proc(client):
@@ -12,7 +16,7 @@ def run_proc(client):
     procs = ProcsAPI(client)
     resp = procs.spawn(
         cmd=["python3", "-u", "-c", "print(input())"],
-        on_output=on_event
+        on_output=on_proc_output
     )
 
     if not resp.ok:
