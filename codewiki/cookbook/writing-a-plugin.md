@@ -28,6 +28,10 @@ class MyPlugin(A2EPlugin):
     def handle(self, msg) -> A2EMessage | None:
         """Main message handler"""
 
+    # --- Event emission ---
+    def emit_event(self, event):
+        """Send async event to client via host executor"""
+
     # --- Lifecycle hooks ---
     def setup(self, host, config: dict):
         """Called once when plugin is loaded. Config includes:
@@ -180,33 +184,46 @@ When multiple plugins handle the same message type:
 
 ## Streaming Events
 
-Plugins can emit streaming events during long-running operations:
+Plugins can emit streaming events to the client during long-running operations using the built-in `emit_event()` method:
 
 ```python
-class MyToolPlugin(A2EPlugin):
-    def setup(self, host, config):
-        super().setup(host, config)
-        self._emit_callback = None
+from a2e.caps.base.protocol import A2EEvent, EventKind
+from a2e.caps.tools.protocol import ToolEvent
 
-    def set_event_callback(self, cb):
-        self._emit_callback = cb
+class MyStreamingPlugin(A2EPlugin):
+    def handle(self, msg):
+        # During execution, emit progress events
+        self.emit_event(ToolEvent(
+            kind="progress",
+            data={"pct": 50, "message": "halfway"},
+            req_id=msg.id,
+        ))
 
-    def emit(self, kind, data):
-        if self._emit_callback:
-            event = ToolEvent(kind=kind, data=data, req_id=self._current_req_id)
-            self._emit_callback(event)
+        # Or use the generic A2EEvent
+        self.emit_event(A2EEvent(
+            kind=EventKind.PROGRESS.value,
+            data={"pct": 100, "message": "done"},
+            req_id=msg.id,
+        ))
+
+        return MyResponse(result="complete")
 ```
 
-The executor sets the callback before calling `handle()`:
+`emit_event()` routes through `self.host_instance._send()` — the executor serializes the event into NDJSON and delivers it via the transport. No callback registration needed.
 
-```python
-# executor.py
-def _dispatch(self, model):
-    for plugin in plugins:
-        if hasattr(plugin, 'set_event_callback'):
-            plugin.set_event_callback(self._send_callback)
-        response = plugin.handle(model)
-```
+### How the executor wires it
+
+During plugin loading (`_load_plugins`), the executor calls `set_push_callback(self._send)` on any plugin that exposes it. This enables the legacy `plugin.push()` pattern (used by `EnvPlugin`). The modern `emit_event()` path is always available through the base class and does not require separate wiring.
+
+### Client-side handling
+
+Events arrive at the client and are routed via `A2EClient._on_message()` through three ordered paths:
+
+1. **Pending RPC** — if `req_id` matches an in-flight `rpc()` call
+2. **Event callback** — if `req_id` was registered via `rpc(..., event_callback=fn)`
+3. **Push handler** — if the message type has a registered push handler
+
+See [Client API → Push Handlers](/sdk-reference/client-api#push-handlers) for details.
 
 ## Testing Your Plugin
 

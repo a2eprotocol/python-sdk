@@ -91,10 +91,23 @@ class EnvPlugin(A2EPlugin):
 
     # Push support
     def set_push_callback(self, cb): ...
-    def push(self, state_delta, reward, terminal, event_type, reason): ...
+    def push(self, episode_id, step_id, action_id, event_type, delta): ...
 ```
 
-**Episode management**: The plugin tracks the current episode internally with `_episode` and `_store` (EpisodeStore). Steps are persisted automatically.
+The `push()` helper emits an `EnvStatePush` event via the executor's `_send()` path. It now guards against missing episode state — `push()` returns early if no episode is active.
+
+**Push event model**:
+```python
+EnvStatePush(
+    episode_id=str,
+    step_id=int,
+    action_id=str,
+    event_type=str,   # e.g. "observation", "reward", "termination"
+    delta=dict,       # incremental state change
+)
+```
+
+**Episode management**: The plugin tracks the current episode internally with `_episode` and `_store` (EpisodeStore). Episodes use a `default_factory` for UUID generation. Steps are persisted automatically.
 
 ## EnvAPI (Client)
 
@@ -125,7 +138,9 @@ env.close(episode_id)
 env.on_push(lambda push: print(f"Push: {push.state_delta}"))
 ```
 
-## EpisodeStore
+Under the hood, `EnvAPI.__init__()` calls `client.register_push_handler("env/state_push", self._on_push)` which routes incoming `EnvStatePush` messages to the registered callbacks. This decouples push handling from the RPC flow — pushes arrive as unsolicited server-initiated messages and are dispatched independently of any pending step/reset call.
+
+### EpisodeStore
 
 Persistence for episode state:
 

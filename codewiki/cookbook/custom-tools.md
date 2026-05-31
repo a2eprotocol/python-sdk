@@ -159,7 +159,11 @@ class HTTPToolsPlugin(A2EPlugin):
         if self._event_callback:
             event = ToolEvent(kind=kind, data=data, req_id=req_id)
             self._event_callback(event)
+```
 
+The event callback is wired by `ToolPlugin.handle()` — when a `ToolCallRequest` arrives, a closure wraps the `ToolEvent` with the request's `req_id` and passes it to `self.emit_event()`, which routes through the executor's standard async event path. See [Plugin System → Event Emission](/architecture/plugin-system#event-emission-plugin-client) for the full architecture.
+
+```python
     # --- ToolPlugin ABC ---
 
     def _list_tools(self) -> list[ToolDefinition]:

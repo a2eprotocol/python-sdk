@@ -112,6 +112,35 @@ client.update_msg_types(TOOL_TYPE_MAP)
 
 Merges new type mappings into the client's type registry, enabling proper decoding of capability-specific messages.
 
+### Push Handlers
+
+Unsolicited server-initiated messages (`EnvStatePush`, `ProcReadEvent`, `MCPServerPush`) that arrive outside any pending RPC are routed via registered push handlers:
+
+```python
+def register_push_handler(self, msg_type: str, callback: Callable):
+    """Register a callback for unsolicited push messages of a given type."""
+
+def unregister_push_handler(self, msg_type: str, callback: Callable):
+    """Remove a previously registered push handler."""
+```
+
+When an inbound message has no matching `req_id` in the pending or event maps, the client checks `_push_handlers[msg.type]` and dispatches to all registered callbacks.
+
+Capability API classes (e.g. `EnvAPI`, `ProcsAPI`) use this internally. Direct usage is rarely needed but available:
+
+```python
+client.register_push_handler("env/state_push", lambda msg: print(f"Push: {msg.state_delta}"))
+client.unregister_push_handler("env/state_push", my_handler)
+```
+
+### Incoming Message Routing
+
+The `_on_message()` method dispatches each incoming message through three ordered paths:
+
+1. **Pending RPC** — `req_id` matches an in-flight `rpc()` call → delivered to the response queue
+2. **Event callback** — `req_id` matches registered event callbacks (from `rpc(..., event_callback=fn)`) → each callback invoked
+3. **Push handler** — message type matches a registered push handler → callbacks invoked
+
 ### Capabilities
 
 ```python

@@ -38,7 +38,7 @@ The **proc** capability manages long-running subprocess lifecycle — spawn, wri
 
 **ProcState** enum: `RUNNING`, `STOPPED`, `CRASHED`, `TIMEDOUT`
 
-**ProcReadEvent** (extends A2EEvent): Streaming output with `proc_id` and `stream_type` (`stdout` / `stderr`).
+**ProcReadEvent** (extends A2EEvent): Streaming output with `proc_id` and `stream_type` (`stdout` / `stderr`). The `data` field contains raw text (not JSON-encoded). Emitted via `emit_event()` through the executor's standard async event path.
 
 **ProcKillRequest**: `signal` field supports `SIGTERM`, `SIGKILL`, `SIGINT`.
 
@@ -58,8 +58,8 @@ class ProcPlugin(A2EPlugin):
         # 1. Validate cmd against allowed_commands
         # 2. Spawn subprocess.Popen
         # 3. Start 3 daemon threads:
-        #    - stdout reader -> emits ProcReadEvent
-        #    - stderr reader -> emits ProcReadEvent
+        #    - stdout reader -> emits ProcReadEvent via emit_event()
+        #    - stderr reader -> emits ProcReadEvent via emit_event()
         #    - process waiter -> updates status on exit
 
     def _write(self, msg):
@@ -71,6 +71,8 @@ class ProcPlugin(A2EPlugin):
     def _status(self, msg):
         # Return ProcStatus
 ```
+
+The background reader threads call `self.emit_event(ProcReadEvent(...))` directly, routing through the executor's `_send()` path rather than `host._send()`. This ensures consistent encoding and delivery for all async events.
 
 **Runtime wrapper** — `ProcSession` tracks each process:
 | Field | Type | Description |

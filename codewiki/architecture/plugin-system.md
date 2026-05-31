@@ -26,6 +26,7 @@ classDiagram
         +supported_messages() Dict
         +handle(message) A2EMessage
         +caps_metadata() dict
+        +emit_event(event) void
         +save_state(store, key, session_id)
         +restore_state(store, key, session_id)
         +teardown()
@@ -73,6 +74,7 @@ classDiagram
 | `supported_messages()` | **Abstract**. Returns `Dict[str, Type[BaseModel]]` mapping type strings to Pydantic model classes. |
 | `handle(message)` | **Abstract**. Processes a decoded message, returns response `A2EMessage` or `None`. |
 | `caps_metadata()` | Returns `{name, type, priority, exclusive}` for capability negotiation. |
+| `emit_event(event)` | Sends an async event to the client through the host executor. Standard path for all server-initiated events. |
 | `save_state(store, key, session_id)` | Serializes plugin state to `SnapshotStore` under key `"plugin_name:key"`. |
 | `restore_state(store, key, session_id)` | Restores from `SnapshotStore`. |
 | `teardown()` | Lifecycle cleanup on shutdown. |
@@ -85,6 +87,52 @@ Every plugin handler should call `audit_handle(msg, response, req_id, t0)` after
 - Success/error: `success` bool, `error_code` if failed
 
 Audit failures are **caught and printed** — they never crash the plugin.
+
+## Event Emission (Plugin → Client)
+
+Plugins can send asynchronous events to the client at any time via `emit_event()`:
+
+```python
+# a2e/core/plugins/interface.py
+class A2EPlugin(ABC):
+    def emit_event(self, event: A2EMessage):
+        """Send an async event to the client through the host executor."""
+        host = getattr(self, 'host_instance', None)
+        if host and hasattr(host, '_send'):
+            host._send(event)
+```
+
+This is the **standard path** for all server-initiated events (streaming output, progress updates, partial results). It routes through the executor's `_send()` method, which encodes and delivers the event via the transport.
+
+### How it works
+
+```mermaid
+sequenceDiagram
+    participant Plugin as Plugin
+    participant Executor as A2EServerRuntimeExecutor
+    participant Transport
+    participant Client as A2EClient
+
+    Plugin->>Executor: emit_event(ProcReadEvent)
+    Executor->>Executor: encode(event) → JSON
+    Executor->>Transport: send(JSON line)
+    Transport->>Client: incoming JSON
+    Client->>Client: decode → A2EMessage
+    Client->>Client: route:
+    Note over Client: Pending RPC match?<br/>→ deliver to queue<br/>Active event callback?<br/>→ call event_callback<br/>Unsolicited push?<br/>→ call push_handler
+```
+
+### Client-side routing
+
+The `A2EClient._on_message()` dispatches each incoming message through three paths in order:
+
+1. **Pending RPC match** — if `req_id` matches an in-flight RPC, the message is delivered to its result queue.
+2. **Event tied to an active RPC** — if `req_id` has registered event callbacks (via `rpc(..., event_callback=fn)`), each callback is invoked.
+3. **Unsolicited push** — if the message type has registered push handlers (via `register_push_handler()`), those handlers are called.
+
+The third path enables capability APIs to subscribe to server-initiated messages that arrive outside any RPC context — for example `EnvStatePush`, `ProcReadEvent`, or `MCPServerPush`.
+
+See [Client API](/sdk-reference/client-api#push-handlers) for the push handler API.
 
 ## Plugin Configuration
 
@@ -123,6 +171,11 @@ for plugin_config in config.plugins:
     plugin = cls()
     plugin.setup(self, plugin_config.metadata.model_dump())
     self._plugin_registry.register(plugin)
+
+# Wire push callback for plugins that support async events
+for name, plugin in self._plugin_registry.all():
+    if hasattr(plugin, 'set_push_callback'):
+        plugin.set_push_callback(self._send)
 ```
 
 ## Type Registry Building

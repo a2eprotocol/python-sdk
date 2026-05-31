@@ -84,6 +84,10 @@ def _load_plugins(self):
             "audit_log": self.audit_log,
             "session_id": self.session_id
         })
+
+    # Wire push callback for plugins that support async events
+    if hasattr(plugin, 'set_push_callback'):
+        plugin.set_push_callback(self._send)
 ```
 
 ### Type Registry Building

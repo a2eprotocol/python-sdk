@@ -74,12 +74,14 @@ env = EnvAPI(client)
 
 # Register push handler
 env.on_push(lambda push: print(
-    f"Push: delta={push.state_delta}, reward={push.reward}, "
-    f"terminal={push.terminal}, reason={push.reason}"
+    f"Push: event={push.event_type}, delta={push.delta}, "
+    f"reward={push.reward}, terminal={push.terminal}"
 ))
 
 # The push callback fires whenever the server sends env/state_push
 ```
+
+Internally, `EnvAPI` registers a push handler via `client.register_push_handler("env/state_push", ...)` on construction. Pushes are delivered as unsolicited server-initiated messages, independent of any pending step/reset RPC.
 
 ## HTTP Mode Agent
 
