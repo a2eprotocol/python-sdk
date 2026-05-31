@@ -73,12 +73,32 @@ class A2EClient:
         self._pending: Dict[str, queue.Queue] = {}
         self._events: Dict[str, list[A2EEvent]] = {}
 
+        # Push message handlers: msg_type → list of callbacks
+        # For unsolicited server-initiated messages (no pending RPC).
+        self._push_handlers: Dict[str, list[Callable]] = {}
+
         self._type_registry = type_registry or {}
         self._type_registry.update(A2E_BASE_TYPE_MAP)
         self._alive = False
 
     def update_msg_types(self, msg_types):
         self._type_registry.update(msg_types)
+
+    def register_push_handler(self, msg_type: str, callback: Callable):
+        """
+        Register a callback for unsolicited push messages of a given type.
+        These are server-initiated messages that arrive without a matching
+        pending RPC (e.g. EnvStatePush, MCPServerPush, ProcReadEvent).
+        """
+        self._push_handlers.setdefault(msg_type, []).append(callback)
+
+    def unregister_push_handler(self, msg_type: str, callback: Callable):
+        """Remove a previously registered push handler."""
+        handlers = self._push_handlers.get(msg_type, [])
+        try:
+            handlers.remove(callback)
+        except ValueError:
+            pass
 
     # ─────────────────────────────────────────────
     # Lifecycle
@@ -145,14 +165,24 @@ class A2EClient:
             return
 
         req_id = getattr(msg, "req_id", None)
+
+        # ── Pending RPC match ─────────────────
         if req_id and req_id in self._pending:
             self._pending[req_id].put(msg)
             return
 
-        if req_id:
-            handlers = self._events.get(msg.req_id, [])
-            for h in handlers:
+        # ── Event tied to an active RPC ─────────
+        if req_id and req_id in self._events:
+            for h in self._events.get(req_id, []):
                 h(msg)
+            return
+
+        # ── Unsolicited push message ──────────
+        msg_type = str(getattr(msg, "type", "") or "")
+        if msg_type and msg_type in self._push_handlers:
+            for h in self._push_handlers[msg_type]:
+                h(msg)
+            return
 
     # ─────────────────────────────────────────────
     # RPC

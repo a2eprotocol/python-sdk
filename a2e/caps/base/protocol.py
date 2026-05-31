@@ -192,4 +192,5 @@ A2E_BASE_TYPE_MAP: dict[str, type] = {
     MessageType.PONG.value: Pong,
     MessageType.SHUTDOWN.value: Shutdown,
     MessageType.ERROR.value: A2EError,
+    MessageType.INVOKE_EVT.value: A2EEvent,
 }

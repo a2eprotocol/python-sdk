@@ -111,7 +111,7 @@ class EnvObservation(BaseModel):
 # INTERNAL EPISODE STATE
 # ---------------------------------------------------------------------------
 class _Episode(BaseModel):
-    id: Optional[str] = str(uuid.uuid4())
+    id: Optional[str] = Field(default_factory=lambda: str(uuid.uuid4()))
     state: EnvState
     done: bool = False
     step_num: int = 0

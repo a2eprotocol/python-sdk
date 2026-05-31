@@ -225,9 +225,12 @@ class EnvPlugin(A2EPlugin):
     ):
         """Helper to emit a structured EnvStatePush event."""
 
+        if not self._episode:
+            return
+
         msg = EnvStatePush(
-            episode_id=self.episode.id,
-            step_id=self.step_id,
+            episode_id=self._episode.id,
+            step_id=self._episode.step_num,
             action_id=action_id,
             event_type=event_type,
             delta=delta or {},

@@ -52,6 +52,19 @@ class A2EPlugin(ABC):
         }
 
     # ─────────────────────────────────────────────
+    # 🔥 Event Emission API (Host → Agent)
+    # ─────────────────────────────────────────────
+    def emit_event(self, event: A2EMessage):
+        """
+        Send an async event to the client through the host executor.
+        This is the standard path for all async server-initiated events.
+        Falls back to the legacy push callback pattern if available.
+        """
+        host = getattr(self, 'host_instance', None)
+        if host and hasattr(host, '_send'):
+            host._send(event)
+
+    # ─────────────────────────────────────────────
     # 🔥 State Management APIs
     # ─────────────────────────────────────────────
     def clear_state(

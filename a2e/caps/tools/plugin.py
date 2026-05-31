@@ -161,10 +161,11 @@ class ToolPlugin(A2EPlugin):
         # TOOL CALL
         # -------------------------------------------------------------
         if isinstance(msg, ToolCallRequest):
-            # attach streaming callback
+            # attach streaming callback — decorates events with req_id
+            # then emits through the executor's standard path
             def _emit(evt: ToolEvent):
                 evt.req_id = msg.id
-                self.emit(evt.kind, evt.data)
+                self.emit_event(evt)
 
             self.set_event_callback(_emit)
 

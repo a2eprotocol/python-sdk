@@ -116,7 +116,7 @@ class ProcPlugin(A2EPlugin):
                 req_id=msg.id,
                 proc_id="",
                 ok=False,
-                pid=None,
+                pid=0,
                 error="Command must be a list",
             )
 
@@ -137,7 +137,7 @@ class ProcPlugin(A2EPlugin):
                 req_id=msg.id,
                 proc_id="",
                 ok=False,
-                pid=None,
+                pid=0,
                 error="Empty command",
             )
             self.audit_handle(
@@ -153,7 +153,7 @@ class ProcPlugin(A2EPlugin):
                 req_id=msg.id,
                 proc_id="",
                 ok=False,
-                pid=None,
+                pid=0,
                 error="Command not allowed",
             )
             self.audit_handle(
@@ -440,10 +440,10 @@ class ProcPlugin(A2EPlugin):
             event = ProcReadEvent(
                 proc_id=proc_id,
                 stream_type=stream_type,
-                data=json.dumps(data),
+                data=data,
                 req_id=req_id
             )
-            self.host_instance._send(event)
+            self.emit_event(event)
         except Exception as error:
             print(f"failed to send event: {str(error)}")
             pass

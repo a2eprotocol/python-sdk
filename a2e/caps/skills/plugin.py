@@ -104,7 +104,7 @@ class SkillPlugin(A2EPlugin):
             seq += 1
 
             # stream to client
-            self.push(evt)
+            self.emit_event(evt)
 
             # aggregate
             events.append(evt)

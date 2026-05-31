@@ -153,6 +153,10 @@ class A2EServerRuntimeExecutor:
             plugin.exclusive = pconf.metadata.exclusive
             self.plugins[pconf.name] = plugin
 
+            # Wire push callback for plugins that support async events
+            if hasattr(plugin, 'set_push_callback'):
+                plugin.set_push_callback(self._send)
+
         self.logger.info(
             f"[a2e-server] Loaded {len(self.plugins)} plugins"
         )

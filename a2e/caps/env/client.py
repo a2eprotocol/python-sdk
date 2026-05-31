@@ -14,6 +14,7 @@ from a2e.caps.env import (
     EnvObservation,
     ENV_TYPE_MAP,
 )
+from a2e.caps.env.protocol import MessageType as EnvMessageType
 
 EnvPushCallback = Callable[[EnvStatePush], None]
 
@@ -26,9 +27,12 @@ class EnvAPI:
         self._c = client
         self._c.update_msg_types(ENV_TYPE_MAP)
 
-        # push callbacks
-        if not hasattr(self._c, "_env_push_cbs"):
-            self._c._env_push_cbs = []
+        # push callbacks — use the client's push handler registry
+        self._env_push_cbs: list[EnvPushCallback] = []
+        self._c.register_push_handler(
+            EnvMessageType.ENV_STATE_PUSH.value,
+            self._on_push,
+        )
 
     def is_done(self, done, truncated) -> bool:
         return done or truncated
@@ -119,12 +123,20 @@ class EnvAPI:
     # -----------------------------------------------------
     # PUSH (streaming updates)
     # -----------------------------------------------------
+    def _on_push(self, msg: EnvStatePush):
+        """Internal push handler — dispatches to registered callbacks."""
+        for cb in self._env_push_cbs:
+            try:
+                cb(msg)
+            except Exception as exc:
+                pass
+
     def on_push(self, callback: EnvPushCallback):
         """Register callback for EnvStatePush."""
-        self._c._env_push_cbs.append(callback)
+        self._env_push_cbs.append(callback)
 
     def remove_push_callback(self, callback: EnvPushCallback):
         try:
-            self._c._env_push_cbs.remove(callback)
+            self._env_push_cbs.remove(callback)
         except ValueError:
             pass
