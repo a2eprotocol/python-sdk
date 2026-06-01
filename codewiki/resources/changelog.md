@@ -6,6 +6,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ---
 
+## [0.1.2] — 2026-06-01
+
+### Removed
+
+- Experimental subprocess transport prototype (`a2e/experimental/core/transports/subprocess.py`) — fully replaced by the core `a2e/core/transports/subprocess.py` since v0.1.1; the experimental directory is now removed
+
 ## [0.1.1] — 2026-06-01
 
 ### Added
