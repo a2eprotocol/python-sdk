@@ -1,11 +1,5 @@
 # Toolkit Builder Plugin & Client Example
 
-```text
-a2e/caps/toolkits/plugin.py   — ToolkitPlugin ABC
-a2e/caps/toolkits/client.py   — ToolkitAPI
-a2e/caps/toolkits/protocol.py — ToolkitDefinition, ToolkitList*, ToolkitConfigure*
-```
-
 ## Overview
 
 Toolkits are **bundled collections of tools** with shared configuration and schemas. While tools are individual stateless operations, toolkits group related tools together and provide a configuration interface (e.g., credentials, API keys, root directories). This cookbook covers:

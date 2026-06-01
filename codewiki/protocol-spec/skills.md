@@ -1,10 +1,5 @@
 # Skills Capability Specification
 
-```text
-a2e/caps/skills/protocol.py  — MessageType, SkillDefinition, SkillDiscover*, SkillCall*, SkillEvent, SkillResult
-a2e/caps/skills/plugin.py    — SkillPlugin
-```
-
 ## Capability Identity
 
 | Property | Value |

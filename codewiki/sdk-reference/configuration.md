@@ -1,9 +1,5 @@
 # Configuration
 
-```text
-a2e/schema.py — A2EHostConfig and all sub-configs
-```
-
 ## A2EHostConfig
 
 The central configuration object, loaded from YAML:

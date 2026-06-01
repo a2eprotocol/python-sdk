@@ -1,10 +1,5 @@
 # Environment Capability Specification
 
-```text
-a2e/caps/env/protocol.py  — 15 message types, EnvState, EnvObservation, EnvAction, EnvStatePush
-a2e/caps/env/plugin.py    — EnvPlugin
-```
-
 ## Capability Identity
 
 | Property | Value |

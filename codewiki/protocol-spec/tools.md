@@ -1,11 +1,5 @@
 # Tools Capability Specification
 
-```text
-a2e/caps/tools/protocol.py  — MessageType, ToolDefinition, ToolParameter, ToolCall*, ToolResult, ToolErrorCode
-a2e/caps/tools/plugin.py    — ToolPlugin ABC
-a2e/caps/tools/client.py    — ToolAPI
-```
-
 ## Capability Identity
 
 | Property | Value |

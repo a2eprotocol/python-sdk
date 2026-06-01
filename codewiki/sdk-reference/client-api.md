@@ -1,9 +1,5 @@
 # Client API
 
-```text
-a2e/core/client/client.py — A2EClient, A2EClientError
-```
-
 ## A2EClient
 
 Transport-agnostic client for connecting to an A2E host.

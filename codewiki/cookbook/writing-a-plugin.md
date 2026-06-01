@@ -1,9 +1,5 @@
 # Writing a Plugin
 
-```text
-a2e/core/plugins/interface.py — A2EPlugin ABC
-```
-
 ## Overview
 
 All A2E capabilities are implemented as plugins. This guide shows you how to write a custom plugin from scratch.

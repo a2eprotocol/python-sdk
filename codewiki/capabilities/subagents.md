@@ -1,11 +1,5 @@
 # Subagents
 
-```text
-a2e/caps/subagents/protocol.py — 12 message types, SubagentConfig, TaskDefinition, SubagentInfo
-a2e/caps/subagents/plugin.py   — SubagentPlugin, SubagentRuntime
-a2e/caps/subagents/client.py   — SubagentClient
-```
-
 Subagents give agents the ability to spawn, delegate to, and merge results from child agents — each with its own model, capability set, and memory isolation scope. This is multi-agent orchestration without a proprietary message bus: the subagent protocol is standardized, so any A2E-compatible host can run it.
 
 ## Overview

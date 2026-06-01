@@ -1,13 +1,5 @@
 # Error Codes
 
-```text
-a2e/caps/base/protocol.py — A2EErrorCode enum
-a2e/caps/tools/protocol.py — ToolErrorCode
-a2e/caps/skills/protocol.py — SkillErrorCode, ErrorCode
-a2e/caps/chains/protocol.py — ChainErrorCode
-a2e/caps/mcp/protocol.py  — MCPErrorCode
-```
-
 ## A2EErrorCode (Core)
 
 The base error codes returned in `A2EError` messages:

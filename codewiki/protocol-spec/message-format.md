@@ -1,9 +1,5 @@
 # Message Format
 
-```text
-a2e/caps/base/protocol.py — A2EMessage, MessageType, A2E_BASE_TYPE_MAP
-```
-
 ## Specification Version
 
 **A2E Protocol Version 1.0** — a strict superset of SCP (Skill Call Protocol) 1.0.

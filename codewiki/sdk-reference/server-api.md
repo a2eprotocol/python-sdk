@@ -1,12 +1,5 @@
 # Server API
 
-```text
-a2e/core/server/server.py          — A2EServer
-a2e/core/server/executor.py       — A2EServerRuntimeExecutor
-a2e/core/server/session.py        — Session
-a2e/core/server/session_manager.py — SessionManager
-```
-
 ## A2EServer
 
 Top-level server that manages sessions, loads plugins, and routes messages.

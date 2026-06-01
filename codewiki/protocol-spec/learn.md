@@ -1,10 +1,5 @@
 # Learning Capability Specification
 
-```text
-a2e/caps/learn/protocol.py  — MessageType, Feedback, Experience, SkillPerformanceRecord, LearnFeedback*, LearnExperience*, LearnAdapt*, LearnStats*
-a2e/caps/learn/plugin.py    — LearnPlugin
-```
-
 ## Capability Identity
 
 | Property | Value |

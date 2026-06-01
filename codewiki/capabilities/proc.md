@@ -1,11 +1,5 @@
 # Processes
 
-```text
-a2e/caps/proc/protocol.py — MessageType, ProcSpawn*, ProcState
-a2e/caps/proc/plugin.py   — ProcPlugin (concrete)
-a2e/caps/proc/client.py   — ProcsAPI
-```
-
 Long-running processes are a blind spot for most agent frameworks — they handle tool calls but not spawning, I/O, signaling, or lifecycle management. A2E's proc capability treats subprocesses as first-class protocol objects: spawn a background task, write to its stdin, read its stdout, signal it, and await its exit — all through typed messages.
 
 ## Overview

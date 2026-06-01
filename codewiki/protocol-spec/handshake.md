@@ -1,9 +1,5 @@
 # Handshake
 
-```text
-a2e/caps/base/protocol.py — HandshakeRequest, HandshakeResponse, A2ECapability
-```
-
 ## Overview
 
 The handshake is the **first message exchange** in any A2E session. The agent sends a `HandshakeRequest`, and the host responds with a `HandshakeResponse` that includes capability negotiation results.

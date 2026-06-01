@@ -1,11 +1,5 @@
 # Memory Plugin & Client Example
 
-```text
-a2e/caps/memory/plugin.py  — MemoryPlugin ABC with init/store/retrieve/forget hooks
-a2e/caps/memory/client.py   — MemoryAPI client
-a2e/caps/memory/protocol.py — MemoryInit*, MemoryStore*, MemoryRetrieve*, MemoryForget*, MemoryEntry, MemoryTier
-```
-
 ## Overview
 
 This cookbook walks through building a custom memory backend (plugin side) and consuming it from an agent (client side). The memory capability provides a 3-tier store — working, episodic, semantic — with init, store, retrieve, and forget operations.

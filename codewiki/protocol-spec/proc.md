@@ -1,10 +1,5 @@
 # Process Capability Specification
 
-```text
-a2e/caps/proc/protocol.py  — MessageType, ProcSpawn*, ProcWrite*, ProcReadEvent, ProcKill*, ProcStatus*
-a2e/caps/proc/plugin.py    — ProcPlugin, ProcSession
-```
-
 ## Capability Identity
 
 | Property | Value |

@@ -1,12 +1,5 @@
 # MCP Bridge Capability Specification
 
-```text
-a2e/caps/mcp/protocol.py    — 20 message types, MCPServerConfig, MCPResource, MCPErrorCode
-a2e/caps/mcp/plugin.py      — MCPPlugin
-a2e/caps/mcp/client.py      — MCPAPI
-a2e/caps/mcp/mcp_gateway.py — MCPGateway, MCPConnection, StdioMCPConnection, SSEMCPConnection
-```
-
 ## Capability Identity
 
 | Property | Value |

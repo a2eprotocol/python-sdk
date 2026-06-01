@@ -1,11 +1,5 @@
 # Toolkits
 
-```text
-a2e/caps/toolkits/protocol.py — MessageType, ToolkitDefinition
-a2e/caps/toolkits/plugin.py   — ToolkitPlugin ABC
-a2e/caps/toolkits/client.py   — ToolkitAPI
-```
-
 Toolkits group related tools into bundles with shared configuration — a database toolkit that wires up schema-aware query tools, an AWS toolkit with pre-configured credentials, a code-review toolkit with linting and security scanning tools. Instead of registering tools individually, you configure once and expose them as a cohesive package.
 
 ## Overview

@@ -1,10 +1,5 @@
 # Subagents Capability Specification
 
-```text
-a2e/caps/subagents/protocol.py  — 12 message types, SubagentConfig, TaskDefinition, SubagentInfo
-a2e/caps/subagents/plugin.py    — SubagentPlugin, SubagentRuntime
-```
-
 ## Capability Identity
 
 | Property | Value |

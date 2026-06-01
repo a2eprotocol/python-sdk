@@ -1,10 +1,5 @@
 # Memory Capability Specification
 
-```text
-a2e/caps/memory/protocol.py  — MessageType, MemoryEntry, MemoryStore*, MemoryRetrieve*, MemoryForget*
-a2e/caps/memory/plugin.py    — MemoryPlugin
-```
-
 ## Capability Identity
 
 | Property | Value |

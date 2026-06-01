@@ -1,12 +1,5 @@
 # Quick Start
 
-```text
-a2e/core/client/client.py    — A2EClient
-a2e/core/server/server.py    — A2EServer
-a2e/schema.py                — A2EHostConfig
-a2e/caps/base/protocol.py    — A2EMessage, Handshake*
-```
-
 ## What is A2E?
 
 A2E (Agent-to-Environment) is a protocol and Python runtime for building **stateful, interactive environments** that LLM agents can interact with. It standardizes how agents use tools, access memory, run processes, observe environments, and learn from feedback — enabling a shift from static prompting to dynamic interaction.

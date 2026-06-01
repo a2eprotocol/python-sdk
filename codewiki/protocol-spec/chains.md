@@ -1,10 +1,5 @@
 # Chains Capability Specification
 
-```text
-a2e/caps/chains/protocol.py  — MessageType, ChainNode, ChainRequest, ChainEvent, ChainResponse
-a2e/caps/chains/plugin.py    — ChainPlugin
-```
-
 ## Capability Identity
 
 | Property | Value |

@@ -1,13 +1,5 @@
 # Transport Layer
 
-```text
-a2e/core/transports/base.py        — BaseTransport ABC
-a2e/core/transports/direct.py      — DirectTransport (in-process)
-a2e/core/transports/http.py        — HTTPTransport (POST + SSE)
-a2e/core/transports/__init__.py    — TransportConfig factory
-a2e/experimental/core/transports/subprocess.py — SubprocessTransport
-```
-
 A2E decouples message delivery from message handling behind a transport abstraction. This lets you run agents over HTTP+SSE in production, DirectTransport in-process for testing and tight RL loops, or subprocess transport for sandboxed execution — all without changing a single line of agent or plugin code.
 
 ## Overview

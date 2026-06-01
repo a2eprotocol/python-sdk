@@ -1,11 +1,5 @@
 # Learning
 
-```text
-a2e/caps/learn/protocol.py — MessageType, Feedback, Experience, SkillPerformanceRecord
-a2e/caps/learn/plugin.py   — LearnPlugin ABC
-a2e/caps/learn/client.py   — LearnAPI
-```
-
 The learn capability is what makes A2E agents self-improving. It defines a standard protocol for feedback (human, environment, or self-critique), experience replay (on-policy and off-policy), and adaptation (UCB1, epsilon-greedy, softmax, or custom strategies). Every agent action becomes a training signal; every correction becomes a policy improvement.
 
 ## Overview

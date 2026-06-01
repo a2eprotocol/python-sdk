@@ -1,11 +1,5 @@
 # Subagent Orchestrator Plugin & Client Example
 
-```text
-a2e/caps/subagents/plugin.py   — SubagentPlugin, SubagentRuntime
-a2e/caps/subagents/client.py   — SubagentClient
-a2e/caps/subagents/protocol.py — 12 message types, SubagentConfig, TaskDefinition, SubagentInfo
-```
-
 ## Overview
 
 This cookbook walks through building a production-grade subagent orchestration plugin (host side) and consuming it from a parent agent (client side). The subagents capability provides multi-agent orchestration — spawning child agents, delegating tasks, awaiting results, inter-agent messaging, and merging outputs.

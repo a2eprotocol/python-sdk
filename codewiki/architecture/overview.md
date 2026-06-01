@@ -1,21 +1,5 @@
 # Architecture Overview
 
-```text
-a2e/schema.py                    — A2EHostConfig (top-level config)
-a2e/caps/base/protocol.py         — A2EMessage, MessageType, Handshake*, A2ECapability
-a2e/core/plugins/interface.py     — A2EPlugin ABC
-a2e/core/plugins/registry.py      — PluginRegistry
-a2e/core/plugins/schema.py        — PluginConfig, PluginMeta
-a2e/core/client/client.py        — A2EClient
-a2e/core/server/server.py         — A2EServer (FastAPI + Direct)
-a2e/core/server/executor.py      — A2EServerRuntimeExecutor (dispatch core)
-a2e/core/server/session.py        — Session
-a2e/core/server/session_manager.py— SessionManager
-a2e/core/transports/base.py       — BaseTransport ABC
-a2e/core/transports/direct.py     — DirectTransport (in-process)
-a2e/core/transports/http.py       — HTTPTransport (POST + SSE)
-```
-
 The A2E architecture is organized into three clean layers — Protocol, Runtime, and Capability — that keep the wire format, the execution kernel, and the plugin ecosystem decoupled from each other. This separation means you can swap transports, extend capabilities, or inspect every message on the wire without touching the layers above or below.
 
 ## System Diagram

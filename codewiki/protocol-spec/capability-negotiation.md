@@ -1,10 +1,5 @@
 # Capability Negotiation
 
-```text
-a2e/caps/base/protocol.py — A2ECapability enum, Capability model
-a2e/core/server/executor.py — _negotiate_caps()
-```
-
 ## Overview
 
 Capability negotiation occurs during the handshake. The agent declares which capabilities it wants to use (`agent_caps`), and the host matches these against its loaded plugins to produce `accepted_caps`.

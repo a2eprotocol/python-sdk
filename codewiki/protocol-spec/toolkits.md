@@ -1,10 +1,5 @@
 # Toolkits Capability Specification
 
-```text
-a2e/caps/toolkits/protocol.py  — MessageType, ToolkitDefinition, ToolkitList*, ToolkitConfigure*
-a2e/caps/toolkits/plugin.py    — ToolkitPlugin (abstract)
-```
-
 ## Capability Identity
 
 | Property | Value |

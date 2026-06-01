@@ -1,13 +1,5 @@
 # Plugin System
 
-```text
-a2e/core/plugins/interface.py  — A2EPlugin ABC
-a2e/core/plugins/registry.py   — PluginRegistry
-a2e/core/plugins/schema.py     — PluginConfig, PluginMeta
-a2e/core/server/executor.py    — Dynamic loading + dispatch
-a2e/core/capabilities.py       — CapabilityRegistry
-```
-
 A2E's host is intentionally thin — it loads, routes, and manages lifecycle, but knows nothing about tools, memory, or environments. All capability logic lives in dynamically loaded plugins, so you can add a custom memory backend, swap a tool executor, or deploy a proprietary feedback pipeline without forking the runtime or changing a single agent.
 
 ## Overview

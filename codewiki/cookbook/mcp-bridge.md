@@ -1,12 +1,5 @@
 # MCP Bridge Plugin & Client Example
 
-```text
-a2e/caps/mcp/plugin.py      — MCPPlugin
-a2e/caps/mcp/client.py      — MCPAPI
-a2e/caps/mcp/protocol.py    — MCPServerConfig, MCPResource, MCPPrompt, 20 message types
-a2e/caps/mcp/mcp_gateway.py — MCPGateway, MCPConnection, StdioMCPConnection, SSEMCPConnection
-```
-
 ## Overview
 
 The MCP Bridge connects A2E to the external MCP ecosystem. This cookbook covers two scenarios:

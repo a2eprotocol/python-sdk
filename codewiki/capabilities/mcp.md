@@ -1,12 +1,5 @@
 # MCP Bridge
 
-```text
-a2e/caps/mcp/protocol.py   — 19 message types, MCPServerConfig, MCPResource
-a2e/caps/mcp/plugin.py     — MCPPlugin
-a2e/caps/mcp/client.py     — MCPAPI
-a2e/caps/mcp/mcp_gateway.py — MCPGateway, MCPConnection, StdioMCPConnection, SSEMCPConnection
-```
-
 The Model Context Protocol (MCP) is a growing ecosystem of tool servers for databases, file systems, web APIs, and more. A2E's MCP bridge makes every MCP server available as a native A2E capability — configure the server endpoint once, and the agent calls its tools through the standard `mcp/call_tool` message, no adapter code needed.
 
 ## Overview

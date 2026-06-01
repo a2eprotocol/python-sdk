@@ -1,12 +1,5 @@
 # Persistence (Store)
 
-```text
-a2e/core/store/base.py   — SnapshotStore ABC
-a2e/core/store/db.py     — SQLiteSnapshotStore
-a2e/core/store/file.py   — FileSnapshotStore
-a2e/core/store/schema.py — SnapshotStoreConfig
-```
-
 ## Overview
 
 A2E environments are **stateful by design**. The `SnapshotStore` abstraction provides a simple key-value persistence interface used by the host and plugins for snapshot/restore operations.

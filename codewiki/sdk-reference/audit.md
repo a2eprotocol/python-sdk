@@ -1,11 +1,5 @@
 # Audit System
 
-```text
-a2e/core/audit/schema.py  — AuditEntry
-a2e/core/audit/logger.py  — AuditLog
-a2e/core/audit/__init__.py — build_audit_log(), build_session_id()
-```
-
 ## Overview
 
 A2E provides built-in structured audit logging for all message processing. Every plugin handler records an `AuditEntry` with timing, byte sizes, and success/error status. Audit is **best-effort** — failures are caught and never crash the handler.

@@ -1,11 +1,5 @@
 # Custom Tools Plugin & Client Example
 
-```text
-a2e/caps/tools/plugin.py  — ToolPlugin ABC
-a2e/caps/tools/client.py   — ToolAPI
-a2e/caps/tools/protocol.py — ToolDefinition, ToolParameter, ToolCall*, ToolResult, ToolEvent, ToolErrorCode
-```
-
 ## Overview
 
 Tools are the most fundamental capability in A2E — primitive, stateless operations like file I/O, HTTP requests, and code execution. This cookbook shows how to:

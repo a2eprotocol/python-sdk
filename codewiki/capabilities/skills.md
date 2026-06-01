@@ -1,11 +1,5 @@
 # Skills
 
-```text
-a2e/caps/skills/protocol.py — MessageType, SkillDefinition, SkillResult
-a2e/caps/skills/plugin.py   — SkillPlugin ABC
-a2e/caps/skills/client.py   — SkillAPI
-```
-
 Skills are named, versioned, sandboxed execution units — think of them as the agent's procedural memory. Where tools are individual operations, skills package multi-step workflows, tool combinations, and conditional logic into a callable unit that can be discovered, invoked, and tracked for performance.
 
 ## Overview

@@ -1,18 +1,5 @@
 # Message Types
 
-```text
-a2e/caps/base/protocol.py          — Base types (7)
-a2e/caps/tools/protocol.py        — Tool types (5)
-a2e/caps/memory/protocol.py       — Memory types (6)
-a2e/caps/env/protocol.py          — Environment types (14)
-a2e/caps/proc/protocol.py        — Process types (8)
-a2e/caps/learn/protocol.py       — Learning types (8)
-a2e/caps/skills/protocol.py      — Skill types (5)
-a2e/caps/toolkits/protocol.py    — Toolkit types (4)
-a2e/caps/chains/protocol.py      — Chain types (3)
-a2e/caps/mcp/protocol.py         — MCP types (19)
-```
-
 ## Complete Type Index
 
 ### Core Types (7)
