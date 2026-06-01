@@ -44,8 +44,8 @@ pip install langchain-openai # LangChain integration (deep_agent.py)
 ## Install from Source
 
 ```bash
-git clone https://github.com/cynepiaadmin/a2e.git
-cd a2e
+git clone https://github.com/a2eprotocol/python-sdk.git
+cd python-sdk
 pip install -e .
 ```
 

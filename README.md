@@ -5,10 +5,10 @@
 **Python implementation of the Agent-to-Environment (A2E) Protocol**
 
 [![PyPI version](https://img.shields.io/pypi/v/a2e.svg)](https://pypi.org/project/a2e/)
-[![License](https://img.shields.io/github/license/cynepiaadmin/a2e.svg)](LICENSE)
+[![License](https://img.shields.io/github/license/a2eprotocol/python-sdk.svg)](LICENSE)
 [![Python Version](https://img.shields.io/pypi/pyversions/a2e.svg)](https://pypi.org/project/a2e/)
-[![Documentation](https://img.shields.io/badge/docs-online-blue.svg)](https://a2e.org)
-[![Protocol Spec](https://img.shields.io/badge/spec-A2E-green.svg)](https://a2e.org/spec.md)
+[![Documentation](https://img.shields.io/badge/docs-online-blue.svg)](https://a2eprotocol.github.io/docs)
+[![Protocol Spec](https://img.shields.io/badge/spec-A2E-green.svg)](https://a2eprotocol.github.io/docs/spec.md)
 
 </div>
 
@@ -255,7 +255,7 @@ audit:
 
 ## Documentation
 
-Full documentation is available at [a2e.org](https://a2e.org) or in the [`codewiki/`](codewiki/) directory.
+Full documentation is available at [a2eprotocol.github.io/docs](https://a2eprotocol.github.io/docs) or in the [`codewiki/`](codewiki/) directory.
 
 ### Getting Started
 - [Quick Start](codewiki/getting-started/quickstart.md) — Install, configure, and run in 5 minutes

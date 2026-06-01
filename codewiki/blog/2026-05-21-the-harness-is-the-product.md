@@ -718,9 +718,9 @@ result = await subagents.run(
 )
 ```
 
-**Full documentation**: [A2E Protocol Docs](https://a2e.org)
-**Source code**: [github.com/cynepiaadmin/a2e](https://github.com/cynepiaadmin/a2e)
-**Protocol spec**: [a2e.org/spec](https://a2e.org/protocol-spec/message-format)
+**Full documentation**: [A2E Protocol Docs](https://a2eprotocol.github.io/docs)
+**Source code**: [github.com/a2eprotocol/python-sdk](https://github.com/a2eprotocol/python-sdk)
+**Protocol spec**: [a2eprotocol.github.io/spec](https://a2eprotocol.github.io/docs/protocol-spec/message-format)
 
 ---
 
