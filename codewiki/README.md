@@ -259,7 +259,7 @@ audit:
 
 ## Documentation
 
-Full documentation is available at [a2e.github.io](https://github.com/cynepiaadmin/a2e.github.io) or in the [`./`](./) directory.
+Full documentation is available at [a2e-docs](https://github.com/a2eprotocol/docs) or in the [`./`](./) directory.
 
 ### Getting Started
 - [Quick Start](./getting-started/quickstart.md) — Install, configure, and run in 5 minutes

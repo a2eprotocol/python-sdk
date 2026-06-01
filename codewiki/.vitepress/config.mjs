@@ -20,7 +20,7 @@ const logoDark = getSvgDataUrl('../assets/logo-dark.svg')
 export default withMermaid({
   title: 'A2E Protocol',
   description: 'Agent-to-Environment Protocol — Python SDK Documentation & Protocol Specification',
-  base: '/a2e.github.io/',
+  base: '/docs/',
   themeConfig: {
     logo: {
       light: logoLight,
@@ -36,7 +36,7 @@ export default withMermaid({
     ],
     sidebar: sidebar,
     socialLinks: [
-      { icon: 'github', link: 'https://github.com/cynepiaadmin/a2e.github.io' }
+      { icon: 'github', link: 'https://github.com/a2eprotocol/python-sdk' }
     ],
     footer: {
       message: 'A2E Protocol v1.0 — Released under the MIT License.',
@@ -46,7 +46,7 @@ export default withMermaid({
       provider: 'local'
     },
     editLink: {
-      pattern: 'https://github.com/a2e-protocol/a2e/edit/main/codewiki/:path',
+      pattern: 'https://github.com/a2eprotocol/a2e/edit/main/codewiki/:path',
       text: 'Edit this page on GitHub'
     }
   },
