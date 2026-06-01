@@ -8,6 +8,8 @@ a2e/core/server/executor.py    — Dynamic loading + dispatch
 a2e/core/capabilities.py       — CapabilityRegistry
 ```
 
+A2E's host is intentionally thin — it loads, routes, and manages lifecycle, but knows nothing about tools, memory, or environments. All capability logic lives in dynamically loaded plugins, so you can add a custom memory backend, swap a tool executor, or deploy a proprietary feedback pipeline without forking the runtime or changing a single agent.
+
 ## Overview
 
 A2E is a **plugin-centric runtime**. The host (server) is a thin execution kernel that loads, routes, and manages lifecycle. All capability-specific logic lives in plugins that are dynamically loaded from configuration.

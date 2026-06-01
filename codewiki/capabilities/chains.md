@@ -6,6 +6,8 @@ a2e/caps/chains/plugin.py   — ChainPlugin (concrete DAG executor)
 a2e/caps/chains/client.py   — ChainsAPI
 ```
 
+Chains enable DAG-based multi-step orchestration — fan-out across tools, merge results, branch on conditions, loop until a threshold is met. Where a single tool call is a step, a chain is a recipe: define the graph of operations once, then execute it as a single `chain/execute` request with structured inputs and outputs.
+
 ## Overview
 
 Chains enable **DAG (Directed Acyclic Graph) pipeline execution** — multi-step compositions of tools, skills, and processes with branching, parallel fan-out, and error handling.

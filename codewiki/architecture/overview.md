@@ -16,6 +16,8 @@ a2e/core/transports/direct.py     — DirectTransport (in-process)
 a2e/core/transports/http.py       — HTTPTransport (POST + SSE)
 ```
 
+The A2E architecture is organized into three clean layers — Protocol, Runtime, and Capability — that keep the wire format, the execution kernel, and the plugin ecosystem decoupled from each other. This separation means you can swap transports, extend capabilities, or inspect every message on the wire without touching the layers above or below.
+
 ## System Diagram
 
 ```mermaid

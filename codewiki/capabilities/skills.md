@@ -6,6 +6,8 @@ a2e/caps/skills/plugin.py   — SkillPlugin ABC
 a2e/caps/skills/client.py   — SkillAPI
 ```
 
+Skills are named, versioned, sandboxed execution units — think of them as the agent's procedural memory. Where tools are individual operations, skills package multi-step workflows, tool combinations, and conditional logic into a callable unit that can be discovered, invoked, and tracked for performance.
+
 ## Overview
 
 Skills are **higher-level, sandboxed execution units** compared to tools. While tools are primitive operations, skills can be multi-step procedures with LLM integration, custom instructions, and streaming execution events.

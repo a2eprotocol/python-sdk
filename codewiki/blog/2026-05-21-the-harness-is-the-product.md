@@ -12,13 +12,21 @@ summary: "Why the AI industry is sleepwalking into harness vendor lock-in, and h
 
 ---
 
+**A2E (Agent-to-Environment)** is an open protocol and Python SDK that standardizes how AI agents interact with their environment — tools, memory, processes, subagents, feedback loops, and RL environments — through a single typed wire format you own, not a vendor's proprietary API.
+
+---
+
 Every AI agent platform today sells you the same story: "Just use our SDK, our runtime, our memory store, our tool definitions, our model routing — and your agents will be *magical*."
 
 They're not wrong about the magic. They're wrong about who owns the wand.
 
 Here's the uncomfortable truth: **the harness is the product**. The model is a commodity. The prompts are ephemeral. What persists — what compounds in value — is the infrastructure that wraps the model: the tool definitions, the memory schemas, the feedback loops, the process orchestration, the skill routing. That's the harness. And if it lives inside someone else's platform, *you don't own your agents.*
 
-A2E exists to change that.
+A2E exists to change that. Think of it as **POSIX for AI agents** — a standard interface between your agent and everything it needs to interact with. Instead of coding to a platform's bespoke SDK, your agent sends and receives typed messages (`tool/call/req`, `memory/store/req`, `learn/feedback/req`) over an open protocol. The memory backend, tool runtime, and process orchestrator are all swappable plugins. The agent code never notices.
+
+This matters more than ever as we enter the era of **recursive self-improving agents** — agents that act, observe, learn from feedback, and adapt their own behavior between turns. In this world, software production cost trends toward zero, but the cost of *churn* — swapping a memory backend, replacing a model provider, migrating off a deprecated platform, retooling a feedback pipeline — trends *up*. Every component swap risks breaking the learning loop, corrupting the replay buffer, or resetting the performance baseline. The savings from faster software production are dwarfed by the cost of rebuilding agent infrastructure every time a vendor changes direction.
+
+A2E inverts this tradeoff. By decoupling the agent from every backend behind a standard protocol, it lets enterprises prioritize **robustness** without sacrificing **speed**: swap any component — model, memory, tools, feedback pipeline — and the agent keeps running, the learning loop stays intact, the audit trail is continuous. The protocol absorbs the churn so your agent infrastructure doesn't have to. You own the interface. You swap the implementations. The agent never notices.
 
 ---
 

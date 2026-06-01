@@ -6,6 +6,8 @@ requirements.txt      — Core dependencies
 requirements-dev.txt  — Dev dependencies
 ```
 
+The A2E SDK requires Python 3.10+ and a handful of lightweight dependencies — Pydantic v2 for schema validation, FastAPI+Uvicorn for the HTTP transport, and aiofiles for async file I/O. Choose your environment: pip for standard deployments, poetry or uv for locked dependency management, or conda for teams already using it.
+
 ## Requirements
 
 - **Python 3.10+** (uses `match` statements, `type` union syntax)

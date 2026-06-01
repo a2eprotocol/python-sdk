@@ -6,6 +6,8 @@ a2e/caps/subagents/plugin.py   — SubagentPlugin, SubagentRuntime
 a2e/caps/subagents/client.py   — SubagentClient
 ```
 
+Subagents give agents the ability to spawn, delegate to, and merge results from child agents — each with its own model, capability set, and memory isolation scope. This is multi-agent orchestration without a proprietary message bus: the subagent protocol is standardized, so any A2E-compatible host can run it.
+
 ## Overview
 
 The **subagents** capability provides multi-agent orchestration — spawning, delegating tasks to, communicating with, and merging results from child agents. Subagents run as independent agent instances with their own model, system prompt, capabilities, and execution scope.

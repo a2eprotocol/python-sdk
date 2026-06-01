@@ -6,6 +6,8 @@ a2e/core/server/session_manager.py — SessionManager
 a2e/core/server/executor.py        — A2EServerRuntimeExecutor (per-session)
 ```
 
+Every agent connection in A2E gets its own isolated session with a dedicated executor, transport channel, and plugin state — no shared mutable state, no cross-agent interference, no session leaks. This isolation is the foundation for running multiple agents (with different capabilities, models, and backends) on the same host without conflict.
+
 ## Overview
 
 Each agent connection gets its own `Session` with an isolated executor and transport. Sessions are created by `SessionManager` and persisted through the agent's lifecycle.

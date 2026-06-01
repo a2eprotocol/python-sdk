@@ -8,6 +8,8 @@ a2e/caps/env/store/base.py    — EpisodeStore ABC
 a2e/caps/env/store/db.py      — SQLiteEpisodeStore
 ```
 
+The environment capability brings RL-native interaction patterns to A2E — reset, step, observe, reward — enabling agents to interact with simulators, games, browser automation, or any stateful system through a standard `env/step` loop. Rewards from env interactions feed directly into the learn capability for on-policy adaptation.
+
 ## Overview
 
 The **env** capability provides a full RL environment interface — reset, step, observe, render, plan, and batch step. It follows the OpenAI Gym / PettingZoo paradigm, making A2E environments directly usable for reinforcement learning.

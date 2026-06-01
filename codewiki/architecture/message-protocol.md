@@ -4,6 +4,8 @@
 a2e/caps/base/protocol.py — A2EMessage, MessageType, Handshake*, A2EError, A2EEvent
 ```
 
+Every interaction between an agent and its environment — tool calls, memory operations, skill execution, multi-agent delegation — travels over a single, typed, versioned wire format. This NDJSON protocol is the contract that decouples agents from backends: as long as both sides speak A2E messages, the implementations can evolve independently.
+
 ## Wire Format
 
 A2E uses **NDJSON** (newline-delimited JSON) as its wire format. Each line is a self-contained JSON object representing one message. Compact JSON encoding (no extra whitespace) is used for efficiency.

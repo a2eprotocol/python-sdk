@@ -6,6 +6,8 @@ a2e/caps/memory/plugin.py   — MemoryPlugin ABC
 a2e/caps/memory/client.py   — MemoryAPI
 ```
 
+Memory gives agents persistence across turns and sessions. A2E defines three tiers — working (current-turn context), episodic (cross-session experience), and semantic (long-term knowledge) — so agents can remember what they just did, learn from past sessions, and recall learned facts, all through a single standard protocol.
+
 ## Overview
 
 The **memory** capability provides a 3-tier memory system (working, episodic, semantic) with store, retrieve, and forget operations. Agents use memory to persist context across turns, recall relevant information, and maintain knowledge bases.

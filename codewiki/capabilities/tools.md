@@ -6,6 +6,8 @@ a2e/caps/tools/plugin.py   — ToolPlugin ABC
 a2e/caps/tools/client.py   — ToolAPI
 ```
 
+Tools are the atomic unit of agent action — the functions an agent can call to read files, execute commands, query APIs, or interact with the world. In the A2E model, every tool call is a typed `tool/call/req` message, making execution auditable, interruptible, and swappable across backends.
+
 ## Overview
 
 The **tools** capability provides native environment tool execution — primitive operations like file I/O, shell commands, HTTP requests, and code evaluation. Tools are the most fundamental building block for agent interaction.
