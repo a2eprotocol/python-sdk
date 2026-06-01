@@ -216,6 +216,7 @@ class A2EClient:
                 self._events.setdefault(req.id, []).append(msg)
                 if event_callback:
                     event_callback(msg)
+                continue
 
             # ─────────────────────────────
             # 🔥 A2E Error

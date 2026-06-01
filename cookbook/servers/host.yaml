@@ -1,5 +1,33 @@
 host_id: "a2e-dev"
 
+# ─────────────────────────────────────────────
+# Transport configuration
+#
+# You can choose between:
+#
+# 1. DirectTransport (in-process, no network)
+#    transport:
+#      type: direct
+#      config: {}
+#
+# 2. SubprocessTransport (stdin/stdout subprocess)
+#    transport:
+#      type: subprocess
+#      config:
+#        command: "python3 -m my_host_module"
+#        env:
+#          PYTHONUNBUFFERED: "1"
+#        cwd: "/app"
+#
+# 3. HTTPTransport (network — default below)
+#    transport:
+#      type: http
+#      config:
+#        base_url: "http://localhost:8765"
+#        send_path: "/send"
+#        stream_path: "/stream"
+# ─────────────────────────────────────────────
+
 snapshot_store:
   type: file
   config:

@@ -97,15 +97,29 @@ class DirectTransport(BaseTransport):
         """
         Send message to the other side.
 
+        Priority:
+          1. _out_handler (explicit external handler — client mode)
+          2. _out_queue   (wired via connect() — server direct mode)
+
         block=False → drop on overflow (low latency mode)
         """
         if not self._alive:
             raise RuntimeError("Transport not alive")
 
+        if self._out_handler is not None:
+            try:
+                self._out_handler(msg)
+                return
+            except Exception as error:
+                self._logger.warning(
+                    "[direct-transport] out_handler error — %s", error
+                )
+                return
+
+        # Fall back to wired queue (connect() sets this up)
         try:
-            self._out_handler(msg)
-        except Exception as error:
-            print(error)
+            self._out_queue.put(msg, block=block, timeout=timeout)
+        except queue.Full:
             self._logger.warning(
                 "[direct-transport] send queue full — dropping message"
             )

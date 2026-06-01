@@ -248,11 +248,13 @@ class TestLifecycle:
             "session_id": "s", "ok": True, "accepted_caps": [],
         }))
         c.connect()
-        c._send = t.send  # restore real send
+        # Restore the real _send method that encodes to JSON before sending
+        real_send = A2EClient._send.__get__(c, A2EClient)
+        c._send = real_send
         c.disconnect()
-        assert any(isinstance(json.loads(m), dict) and json.loads(m).get("type") == "shutdown"
-                   for m in t.sent) or any(
-            hasattr(m, "type") and m.type == "shutdown" for m in t.sent
+        # t.sent should now contain JSON strings, not A2EMessage objects
+        assert any(
+            json.loads(m).get("type") == "shutdown" for m in t.sent
         )
 
     def test_ping_returns_ms(self):

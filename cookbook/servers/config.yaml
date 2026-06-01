@@ -7,6 +7,39 @@ transport:
     send_path: "/send"
     stream_path: "/stream"
 
+# ─────────────────────────────────────────────
+# DirectTransport (in-process, no network)
+# Uncomment to use instead of HTTP:
+#
+# transport:
+#   type: direct
+#   config: {}           # no config needed — wired programmatically
+#
+# The DirectTransport pair is created in code:
+#   t1 = DirectTransport(logger)
+#   t2 = DirectTransport(logger)
+#   t1.connect(t2)
+# Then pass one transport to the host and the other
+# to the agent (see cookbook/servers/a2e_direct.py).
+# ─────────────────────────────────────────────
+
+# ─────────────────────────────────────────────
+# SubprocessTransport (stdin/stdout subprocess)
+# Uncomment to use instead of HTTP:
+#
+# transport:
+#   type: subprocess
+#   config:
+#     command: "python3 -m a2e_subprocess_host --config config.yaml"
+#     env:
+#       A2E_CONFIG: "config.yaml"
+#     cwd: "/path/to/project"
+#
+# The host runs as a subprocess; communication
+# happens over its stdin/stdout pipes as NDJSON.
+# See cookbook/agents/subprocess_agent.py.
+# ─────────────────────────────────────────────
+
 server:
   host: "0.0.0.0"
   port: 8765
@@ -74,9 +107,6 @@ plugins:
     type: mcp
     cls: a2e.caps.mcp.plugin.MCPPlugin
     metadata:
-      # ─────────────────────────────────────────────
-      # Registered MCP Servers
-      # ─────────────────────────────────────────────
       servers:
         - name: local_tools
           transport: direct
@@ -95,16 +125,10 @@ plugins:
             base_url: "http://localhost:8081"
             timeout: 30
 
-      # ─────────────────────────────────────────────
-      # Routing Defaults
-      # ─────────────────────────────────────────────
       routing:
-        strategy: auto        # auto | first | round_robin | fallback
+        strategy: auto
         fallback_enabled: true
 
-      # ─────────────────────────────────────────────
-      # Observability
-      # ─────────────────────────────────────────────
       observability:
         track_latency: true
         track_failures: true

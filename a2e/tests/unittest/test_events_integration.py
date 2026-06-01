@@ -33,10 +33,7 @@ class FakeLogger:
 
 
 class EventEmitterPlugin(A2EPlugin):
-    """
-    A plugin that emits events during handle() for testing the
-    event path from plugin → executor → transport → client.
-    """
+    """Plugin that emits events during handle() for testing."""
     name = "emitter"
     priority = 5
 
@@ -46,13 +43,12 @@ class EventEmitterPlugin(A2EPlugin):
 
     def supported_messages(self):
         return {
-            "emitter/req": A2EMessage,
-            "emitter/emit": A2EMessage,
+            "test/req": A2EMessage,
+            "test/emit": A2EMessage,
         }
 
     def handle(self, message):
-        if message.type == "emitter/emit":
-            # Emit a streaming event, then return the response
+        if message.type == "test/emit":
             evt = A2EEvent(
                 kind=EventKind.PROGRESS.value,
                 data={"pct": 50, "message": "halfway"},
@@ -60,8 +56,14 @@ class EventEmitterPlugin(A2EPlugin):
                 seq=0,
             )
             self.emit_event(evt)
-            return A2EMessage(type="emitter/resp", id=message.id)
-        return A2EMessage(type="emitter/resp", id=message.id)
+        # Return response with req_id so client can route it to pending RPC
+        return TestResponse(req_id=message.id, id=A2EMessage.new_id())
+
+
+class TestResponse(A2EMessage):
+    """Response message type with req_id for RPC routing."""
+    type: str = "test/resp"
+    req_id: str = ""
 
     def set_push_callback(self, fn):
         self.push_cb = fn
@@ -94,19 +96,19 @@ def connected_executor_client():
         transport=client_transport,
         logger=FakeLogger(),
         agent_id="integration-test",
-        agent_caps=["emitter"],
+        agent_caps=["test"],
     )
 
     # Add plugin directly (bypass importlib)
-    plugin = EventEmitterPlugin(executor, {"type": "emitter", "priority": 5, "exclusive": False})
-    executor.plugins["emitter"] = plugin
+    plugin = EventEmitterPlugin(executor, {"type": "test", "priority": 5, "exclusive": False})
+    executor.plugins["test"] = plugin
     executor._build_registry()
 
-    # Update client type registry with emitter types
+    # Update client type registry with test types
     client.update_msg_types({
-        "emitter/req": A2EMessage,
-        "emitter/emit": A2EMessage,
-        "emitter/resp": A2EMessage,
+        "test/req": A2EMessage,
+        "test/emit": A2EMessage,
+        "test/resp": TestResponse,
     })
 
     return executor, client
@@ -133,8 +135,8 @@ class TestFullEventPath:
         def on_event(evt):
             received_events.append(evt)
 
-        # Send an emitter/emit request
-        req = A2EMessage(type="emitter/emit", id="test-rpc-1")
+        # Send a test/emit request
+        req = A2EMessage(type="test/emit", id="test-rpc-1")
         resp = client.rpc(req, timeout=10, event_callback=on_event)
 
         # We should have received at least one event
@@ -157,7 +159,7 @@ class TestFullEventPath:
         def on_event(evt):
             received.append(evt)
 
-        req = A2EMessage(type="emitter/emit", id="req-custom-42")
+        req = A2EMessage(type="test/emit", id="req-custom-42")
         client.rpc(req, timeout=10, event_callback=on_event)
         assert len(received) >= 1
         assert received[0].req_id == "req-custom-42"
@@ -173,7 +175,7 @@ class TestFullEventPath:
         def on_event(evt):
             received.append(evt)
 
-        req = A2EMessage(type="emitter/emit", id="req-seq-test")
+        req = A2EMessage(type="test/emit", id="req-seq-test")
         client.rpc(req, timeout=10, event_callback=on_event)
         if len(received) >= 1:
             assert received[0].seq >= 0
@@ -189,10 +191,10 @@ class TestFullEventPath:
         def on_event(evt):
             received.append(evt)
 
-        req = A2EMessage(type="emitter/emit", id="req-final")
+        req = A2EMessage(type="test/emit", id="req-final")
         resp = client.rpc(req, timeout=10, event_callback=on_event)
-        assert resp.type == "emitter/resp"
-        assert resp.id == "req-final"
+        assert resp.type == "test/resp"
+        assert resp.req_id == "req-final"
 
     def test_multiple_events(self, connected_executor_client):
         """Multiple events can be emitted during a single RPC."""
@@ -203,7 +205,7 @@ class TestFullEventPath:
         # Create a version that emits 3 events
         class MultiEmitter(EventEmitterPlugin):
             def handle(self, message):
-                if message.type == "emitter/emit":
+                if message.type == "test/emit":
                     for i in range(3):
                         evt = A2EEvent(
                             kind=EventKind.PROGRESS.value,
@@ -212,11 +214,11 @@ class TestFullEventPath:
                             seq=i,
                         )
                         self.emit_event(evt)
-                return A2EMessage(type="emitter/resp", id=message.id)
+                return TestResponse(req_id=message.id)
 
         # Replace the plugin with multi-emitter
-        executor.plugins["emitter"] = MultiEmitter(
-            executor, {"type": "emitter", "priority": 5, "exclusive": False}
+        executor.plugins["test"] = MultiEmitter(
+            executor, {"type": "test", "priority": 5, "exclusive": False}
         )
         executor._build_registry()
 
@@ -225,7 +227,7 @@ class TestFullEventPath:
         def on_event(evt):
             received.append(evt)
 
-        req = A2EMessage(type="emitter/emit", id="req-multi")
+        req = A2EMessage(type="test/emit", id="req-multi")
         client.rpc(req, timeout=10, event_callback=on_event)
         assert len(received) == 3
         assert received[0].data["seq"] == 0
@@ -284,9 +286,9 @@ class TestPushHandlerIntegration:
         def on_event(evt):
             received.append(evt)
 
-        req = A2EMessage(type="emitter/emit", id="req-push-test")
+        req = A2EMessage(type="test/emit", id="req-push-test")
         resp = client.rpc(req, timeout=10, event_callback=on_event)
-        assert resp.type == "emitter/resp"
+        assert resp.type == "test/resp"
 
 
 class TestMultiplePlugins:
@@ -296,6 +298,10 @@ class TestMultiplePlugins:
 
         # Already has one plugin ("emitter"). Add another.
         from a2e.core.plugins.schema import PluginConfig, PluginMeta
+
+        class Emitter2Response(A2EMessage):
+            type: str = "emitter2/resp"
+            req_id: str = ""
 
         class Emitter2(EventEmitterPlugin):
             name = "emitter2"
@@ -311,12 +317,11 @@ class TestMultiplePlugins:
                         req_id=message.id,
                     )
                 )
-                return A2EMessage(type="emitter2/resp", id=message.id)
-
+                return Emitter2Response(req_id=message.id)
         plugin2 = Emitter2(executor, {"type": "emitter2", "priority": 0, "exclusive": False})
         executor.plugins["emitter2"] = plugin2
         executor._build_registry()
-        client.update_msg_types({"emitter2/req": A2EMessage, "emitter2/resp": A2EMessage})
+        client.update_msg_types({"emitter2/req": A2EMessage, "emitter2/resp": Emitter2Response})
 
         executor.start()
         client.connect()
@@ -340,7 +345,7 @@ class TestErrorInEventHandler:
         executor.start()
         client.connect()
 
-        req = A2EMessage(type="emitter/emit", id="req-timing")
+        req = A2EMessage(type="test/emit", id="req-timing")
         received = []
 
         def on_event(evt):

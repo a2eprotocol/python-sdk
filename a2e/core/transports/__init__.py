@@ -7,6 +7,9 @@ from a2e.core.transports.http import (
 from a2e.core.transports.direct import (
     DirectTransport
 )
+from a2e.core.transports.subprocess import (
+    SubprocessTransport
+)
 
 
 # ─────────────────────────────────────────────
@@ -41,7 +44,15 @@ class DirectTransportConfig(BaseModel):
 class SubprocessTransportConfig(BaseModel):
     command: Optional[str] = Field(
         None,
-        description="Command to launch subprocess"
+        description="Command to launch subprocess (e.g. 'python3 -c \"...\"')"
+    )
+    env: Optional[dict[str, str]] = Field(
+        None,
+        description="Environment variables to pass to subprocess"
+    )
+    cwd: Optional[str] = Field(
+        None,
+        description="Working directory for subprocess"
     )
 
 
@@ -70,6 +81,18 @@ def build_transport(cfg: TransportConfig, logger):
         )
     elif ttype == "direct":
         raise ValueError("DirectTransport must be injected programmatically")
+    elif ttype == "subprocess" or ttype == "stdio":
+        if not tconf.command:
+            raise ValueError("SubprocessTransport requires a 'command' in config")
+
+        import shlex
+        cmd = tconf.command if isinstance(tconf.command, list) else shlex.split(tconf.command)
+        return SubprocessTransport(
+            command=cmd,
+            logger=logger,
+            env=getattr(tconf, "env", None),
+            cwd=getattr(tconf, "cwd", None),
+        )
     else:
         raise ValueError(f"Unknown transport type: {ttype}")
 
@@ -79,5 +102,8 @@ __all__ = [
     "TransportConfig",
     "HTTPTransport",
     "DirectTransport",
-    "HTTPTransportConfig"
+    "SubprocessTransport",
+    "HTTPTransportConfig",
+    "DirectTransportConfig",
+    "SubprocessTransportConfig",
 ]

@@ -6,6 +6,30 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ---
 
+## [0.1.1] — 2026-06-01
+
+### Added
+
+**Transport**
+- `SubprocessTransport` promoted from experimental to core (`a2e/core/transports/subprocess.py`) — spawns host as subprocess, communicates via stdin/stdout NDJSON
+- `SubprocessTransportConfig.env` and `cwd` fields for environment/working dir control
+- `SubprocessTransport` and `DirectTransportConfig`/`SubprocessTransportConfig` exported in `__all__`
+
+**Cookbook**
+- `cookbook/agents/direct_agent.py` — agent connecting via DirectTransport pair with `--self-contained` mode
+- `cookbook/agents/subprocess_agent.py` — agent that launches host as subprocess over SubprocessTransport
+- `cookbook/servers/a2e_subprocess_host.py` — host that reads stdin via DirectTransport bridge
+- `cookbook/servers/config_subprocess.yaml` — standalone subprocess transport config example
+
+### Fixed
+
+- **DirectTransport.send()**: Now falls back to `_out_queue.put(msg)` when `_out_handler` is None, making `connect()` wiring actually work. Previously all outgoing messages were silently dropped when no `_out_handler` was set (the server direct mode case).
+- **Client rpc() event loop**: Added missing `continue` after processing `A2EEvent` messages — previously events fell through and were returned as the final RPC response instead of waiting for the actual response.
+- **Executor _build_registry()**: Added `type_to_plugins.clear()` before rebuild to prevent duplicate plugin registration entries when `_build_registry()` is called multiple times.
+- **Capability enum**: Added `TEST = "test"` to `A2ECapability` for generic test capability.
+
+---
+
 ## [0.1.0] — 2026-05-18
 
 ### Added

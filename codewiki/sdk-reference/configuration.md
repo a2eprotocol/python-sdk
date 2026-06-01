@@ -157,7 +157,53 @@ plugins:
 | `type` | `str` | `"http"`, `"direct"`, or `"subprocess"` |
 | `config` | `HTTPTransportConfig \| DirectTransportConfig \| SubprocessTransportConfig` | Type-specific config |
 
-## AuditConfig
+## HTTPTransportConfig
+
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `base_url` | `HttpUrl` | Yes | — | Base URL of A2E server |
+| `send_path` | `str` | No | `"/send"` | POST endpoint for outgoing messages |
+| `stream_path` | `str` | No | `"/stream"` | SSE endpoint for incoming messages |
+
+## DirectTransportConfig
+
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| *(none)* | — | — | — | No config fields — wired programmatically via `connect()` |
+
+See `cookbook/servers/a2e_direct.py` for wiring example.
+
+## SubprocessTransportConfig
+
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `command` | `str` | No | `None` | Command to launch the host subprocess (e.g. `"python3 -c '...'"`) |
+| `env` | `dict[str, str]` | No | `None` | Environment variables to pass to the subprocess |
+| `cwd` | `str` | No | `None` | Working directory for the subprocess |
+
+### Subprocess YAML example
+
+```yaml
+transport:
+  type: subprocess
+  config:
+    command: "python3 -m a2e_subprocess_host --config config_subprocess.yaml"
+    env:
+      PYTHONUNBUFFERED: "1"
+    cwd: "/app"
+```
+
+### Direct YAML example
+
+```yaml
+transport:
+  type: direct
+  config: {}
+```
+
+::: warning
+DirectTransport is wired programmatically — the YAML config `type: direct` is valid but `build_transport()` raises `ValueError`. Use the `DirectTransport` class directly in code.
+:::
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|

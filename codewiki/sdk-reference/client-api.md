@@ -19,7 +19,7 @@ A2EClient(
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `transport` | `BaseTransport` | required | The transport to use (HTTP or Direct) |
+|| `transport` | `BaseTransport` | required | The transport to use (DirectTransport, HTTPTransport, or SubprocessTransport) |
 | `logger` | `Logger` | required | Logger instance |
 | `agent_id` | `str` | `"agent"` | Agent identifier sent during handshake |
 | `auth_token` | `str` | `""` | Authentication token |

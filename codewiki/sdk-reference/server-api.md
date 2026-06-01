@@ -59,7 +59,7 @@ client.connect()
 
 ## A2EServerRuntimeExecutor
 
-Per-session message processing engine. Each session gets its own executor instance.
+Per-session message processing engine. Each session gets its own executor instance. The executor is transport-agnostic and works with DirectTransport and SubprocessTransport.
 
 ### Plugin Loading
 
@@ -87,12 +87,28 @@ def _load_plugins(self):
 
 ```python
 def _build_registry(self):
+    self.type_to_plugins.clear()  # Clear before rebuild to avoid duplicates
     for plugin in self._plugin_registry.all():
         for msg_type, model_class in plugin.supported_messages().items():
             self.type_registry[msg_type] = model_class
             self.type_to_plugins[msg_type].append(plugin)
     # Sort each list by priority (descending)
 ```
+
+### Response req_id Injection
+
+When a plugin returns a response, the executor auto-injects `req_id` from the incoming request's `id` if the response model has a `req_id` field:
+
+```python
+def _run_plugin(self, plugin, message):
+    res = plugin.handle(message)
+    if res:
+        if hasattr(res, "req_id"):
+            res.req_id = res.req_id or message.id
+        self._send(res)
+```
+
+This ensures the client's `_on_message` can route the response to the correct pending RPC.
 
 ### Capability Negotiation
 

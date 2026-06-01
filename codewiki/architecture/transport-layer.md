@@ -1,10 +1,16 @@
 # Transport Layer
 
-A2E decouples message delivery from message handling behind a transport abstraction. This lets you run agents over HTTP+SSE in production, DirectTransport in-process for testing and tight RL loops, or subprocess transport for sandboxed execution — all without changing a single line of agent or plugin code.
+A2E decouples message delivery from message handling behind a transport abstraction. This lets you run agents over HTTP+SSE in production, DirectTransport in-process for testing and tight RL loops, or SubprocessTransport via stdin/stdout pipes for sandboxed execution — all without changing a single line of agent or plugin code.
 
 ## Overview
 
-A2E uses a **transport abstraction** to decouple message handling from the underlying communication mechanism. The `BaseTransport` ABC defines the interface, with two production implementations and one experimental.
+A2E uses a **transport abstraction** to decouple message handling from the underlying communication mechanism. The `BaseTransport` ABC defines the interface, with three implementations:
+
+| Transport | Communication | Use Case |
+|-----------|--------------|----------|
+| `DirectTransport` | In-memory queue pair | Testing, RL step loops, embedded deployments |
+| `HTTPTransport` | HTTP POST + SSE | Production network deployments |
+| `SubprocessTransport` | stdin/stdout pipes | Subprocess host, Docker sidecars, CI/CD |
 
 ## Component Diagram
 
@@ -20,9 +26,9 @@ flowchart TD
         DB -->|queue| DC
     end
 
-    subgraph Experimental
-        SP[SubprocessTransport] -->|stdin/stdout| PR[Host Process]
-        PR -->|stdout/stdin| SP
+    subgraph Subprocess
+        SP[SubprocessTransport] -->|stdin| PR[Host Process]
+        PR -->|stdout| SP
     end
 
     BT[BaseTransport ABC] --> HC
@@ -34,16 +40,17 @@ flowchart TD
 
 | Method | Purpose |
 |--------|---------|
-| `start()` | Initialize transport (async) |
+| `start()` | Initialize transport (synchronous) |
 | `send(msg)` | Send a message to the remote side |
 | `deliver(msg)` | Queue an incoming message for the handler |
 | `set_message_handler(handler)` | Set callback for incoming messages |
 | `set_out_handler(handler)` | Set interceptor for outgoing messages |
+| `alive()` | Check if transport is running |
 | `stop()` | Graceful shutdown |
 
 Two handler slots:
-- `_handler` — Called when a message arrives from the remote side
-- `_out_handler` — Called before a message is sent out (interception)
+- `_handler` — Called when a message arrives from the remote side (via `deliver()` or reader thread)
+- `_out_handler` — Called before a message is sent (interception). When unset, `send()` falls back to the internal queue wiring (for `DirectTransport`) or the subprocess pipe (for `SubprocessTransport`).
 
 ## DirectTransport
 
@@ -52,19 +59,39 @@ In-memory transport using two `queue.Queue(maxsize=1000)` instances. Designed fo
 ```python
 from a2e.core.transports.direct import DirectTransport
 
-t_server = DirectTransport()
-t_client = DirectTransport()
-t_client.connect(t_server)  # Cross-wires: client.out = server.in, server.out = client.in
-
-# Each transport has a daemon reader thread that pops from _in_queue
-# and invokes _handler. send() calls _out_handler directly.
+t_server = DirectTransport(logger=logger)
+t_client = DirectTransport(logger=logger)
+t_server.connect(t_client)
+# After connect():
+#   t_server._out_queue = t_client._in_queue
+#   t_client._out_queue = t_server._in_queue
 ```
 
 **Key features**:
-- Zero-copy in-process communication
-- Queue-based backpressure (maxsize=1000)
+- Zero-copy in-process communication — no serialization overhead
+- Queue-based backpressure (maxsize=1000, configurable)
 - Daemon reader thread for async delivery
-- `connect(other)` cross-wires two transports bidirectionally
+- `connect(other)` cross-wires two transports bidirectionally in one call
+- `send()` priority: `_out_handler` first, then falls back to `_out_queue` (the wired peer)
+- Non-blocking mode: `send(msg, block=False)` drops on queue full
+
+### Usage pattern
+
+```python
+# Create wired pair
+host_transport = DirectTransport(logger=logger)
+agent_transport = DirectTransport(logger=logger)
+host_transport.connect(agent_transport)
+
+# Pass one to the host runtime, the other to the agent
+executor = A2EServerRuntimeExecutor(config, host_transport, logger)
+executor.start()
+
+client = A2EClient(agent_transport, logger, agent_id="my-agent")
+client.connect()
+```
+
+See `cookbook/agents/direct_agent.py` and `cookbook/servers/a2e_direct.py` for full examples.
 
 ## HTTPTransport
 
@@ -101,22 +128,81 @@ A daemon thread reads the SSE stream with **exponential backoff reconnection** (
 
 `set_interceptor(fn)` allows message transformation before sending (e.g. compression, signing).
 
+## SubprocessTransport
+
+Spawns an A2E host as a child process and communicates via line-delimited NDJSON over stdin/stdout pipes.
+
+```python
+from a2e.core.transports.subprocess import SubprocessTransport
+
+transport = SubprocessTransport(
+    command=["python3", "-m", "my_host_module"],
+    logger=logger,
+    env={"PYTHONUNBUFFERED": "1"},
+    cwd="/app",
+)
+transport.start()
+```
+
+**Key features**:
+- Thread-safe writes with write lock
+- Daemon reader thread consuming stdout line-by-line
+- Graceful shutdown: close stdin → wait 3s → SIGTERM → wait 2s → SIGKILL
+- Custom env vars and working directory
+- `alive()` checks subprocess health
+
+### Usage pattern
+
+```python
+# Launch host as subprocess
+transport = SubprocessTransport(
+    command=["python3", "-c", "import sys; ..."],
+    logger=logger,
+)
+client = A2EClient(transport, logger, agent_id="sub-agent")
+
+client.connect()
+latency = client.ping()
+print(f"Session: {client._session_id}, Ping: {latency:.2f}ms")
+client.disconnect()
+transport.stop()
+```
+
+See `cookbook/agents/subprocess_agent.py` for a complete example.
+
 ## TransportConfig Factory
 
+The `build_transport()` function creates a transport from configuration:
+
 ```yaml
+# HTTP
 transport:
   type: http
   config:
     base_url: "http://localhost:8765"
     send_path: "/send"
     stream_path: "/stream"
+
+# Direct (must be wired programmatically — see note below)
+# transport:
+#   type: direct
+#   config: {}
+
+# Subprocess
+# transport:
+#   type: subprocess
+#   config:
+#     command: "python3 -c '...'"
+#     env:
+#       PYTHONUNBUFFERED: "1"
+#     cwd: "/app"
 ```
 
 | Type | Class | Use Case |
 |------|-------|----------|
-| `http` | `HTTPTransport` | Network communication |
+| `http` | `HTTPTransport` | Network communication (production) |
 | `direct` | `DirectTransport` | In-process (injected programmatically) |
-| `subprocess` | `SubprocessTransport` | Experimental — spawns host as subprocess |
+| `subprocess` / `stdio` | `SubprocessTransport` | stdin/stdout subprocess |
 
 ```python
 from a2e.core.transports import build_transport
@@ -125,25 +211,48 @@ transport = build_transport(config.transport, logger=my_logger)
 ```
 
 ::: warning
-`DirectTransport` cannot be built from config alone — it requires programmatic `connect()` to wire the peer transport.
+`DirectTransport` cannot be built from config alone — it requires programmatic `connect()` to wire the peer transport. Use `DirectTransportConfig` directly when wiring manually.
 :::
 
-## SubprocessTransport (Experimental)
-
-Spawns the A2E host as a subprocess, communicating via stdin/stdout:
+## TransportConfig Models
 
 ```python
-# In a2e/experimental/core/transports/subprocess.py
-class SubprocessTransport:
-    def start(self, cmd=None):
-        self._proc = subprocess.Popen(cmd or self._cmd, stdin=PIPE, stdout=PIPE)
-        self._reader = Thread(target=self._read_loop, daemon=True)
+from a2e.core.transports import (
+    HTTPTransportConfig,
+    DirectTransportConfig,
+    SubprocessTransportConfig,
+)
 ```
 
-- Line-buffered, thread-safe writes with lock
-- `alive()` checks process status
-- `stop()` sends graceful termination with 10s timeout, then kills
+### HTTPTransportConfig
 
-::: danger
-SubprocessTransport is in `a2e/experimental/` — not production-ready.
-:::
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `base_url` | `HttpUrl` | required | Base URL of A2E server |
+| `send_path` | `str` | `"/send"` | POST endpoint for sending messages |
+| `stream_path` | `str` | `"/stream"` | SSE endpoint for receiving messages |
+
+### DirectTransportConfig
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| *(none)* | — | — | No config needed — wired programmatically |
+
+### SubprocessTransportConfig
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `command` | `Optional[str]` | `None` | Command to launch subprocess |
+| `env` | `Optional[dict[str, str]]` | `None` | Environment variables for subprocess |
+| `cwd` | `Optional[str]` | `None` | Working directory for subprocess |
+
+## Testing
+
+Transport tests are in `a2e/tests/unittest/`:
+
+| Test file | Tests | Coverage |
+|-----------|-------|----------|
+| `test_transport_direct.py` | 47 | Init, lifecycle, connect wiring, messaging, out-handler priority, queue fallback, overflow, thread safety, edge cases |
+| `test_transport_subprocess.py` | 29 | Lifecycle, send/receive, JSON/unicode/empty/very-long messages, concurrent sends, process management, error handling, SIGTERM-ignoring processes |
+
+Both test suites run with `pytest a2e/tests/unittest/test_transport_*.py`.

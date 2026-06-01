@@ -1,0 +1,60 @@
+host_id: "a2e-subprocess-host"
+
+# ─────────────────────────────────────────────
+# SubprocessTransport config
+#
+# The host runs as a child process. The parent
+# (agent, orchestrator) communicates over the
+# child's stdin/stdout using line-delimited NDJSON.
+#
+# No network ports required — ideal for:
+#   - Docker sidecars
+#   - CI/CD pipelines
+#   - Embedded deployments
+# ─────────────────────────────────────────────
+transport:
+  type: subprocess
+  config:
+    command: "python3 -m a2e_subprocess_host --config config_subprocess.yaml"
+    env:
+      PYTHONUNBUFFERED: "1"
+    cwd: "/app"
+
+snapshot_store:
+  type: file
+  config:
+    root: "/tmp/a2e"
+
+audit:
+  enabled: false  # subprocess mode — logs to stderr
+
+plugins:
+  - name: mytools
+    type: tools
+    cls: tools.registry_tool_plugin.RegistryToolPlugin
+    metadata:
+      tool_modules:
+        - tools.read_file_tool
+        - tools.http_get_tool
+        - tools.python_eval_tool
+        - tools.glob_tool
+        - tools.grep_tool
+
+  - name: counter_env
+    type: env
+    cls: counter_env.CounterEnv
+
+  - name: myprocs
+    type: procs
+    cls: a2e.caps.proc.plugin.ProcPlugin
+    metadata:
+      ALLOWED_COMMANDS:
+        - python3
+        - bash
+        - ls
+        - echo
+        - cat
+      DEFAULT_TIMEOUT: 30
+      MAX_OUTPUT_BYTES: 1000000
+      MAX_PROCS: 5
+      DISABLE_NETWORK: true

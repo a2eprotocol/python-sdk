@@ -87,6 +87,7 @@ class A2ECapability(str, Enum):
     CHAINS = "chains"         # chain/* pipelines
     MULTI_AGENT = "multi_agent"    # peer agent coordination (future)
     MCP = "mcp"            # mcp/* bridge namespace
+    TEST = "test"           # generic test capability
 
 
 class Capability(BaseModel):

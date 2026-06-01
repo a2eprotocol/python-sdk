@@ -168,6 +168,8 @@ class A2EServerRuntimeExecutor:
         return cls(self, config)
 
     def _build_registry(self):
+        self.type_to_plugins.clear()
+
         for plugin in self.plugins.values():
             for msg_type, model in plugin.supported_messages().items():
                 self.type_registry[msg_type] = model
@@ -305,6 +307,10 @@ class A2EServerRuntimeExecutor:
     def _run_plugin(self, plugin: A2EPlugin, message: BaseModel):
         res = plugin.handle(message)
         if res:
+            # Auto-inject req_id from the incoming request so the client
+            # can route the response to the correct pending RPC
+            if hasattr(res, "req_id"):
+                res.req_id = getattr(res, "req_id", "") or getattr(message, "id", "")
             self._send(res)
 
     # ─────────────────────────────────────────────

@@ -740,4 +740,4 @@ That's the harness. And with A2E, **you own it**.
 
 ---
 
-*The A2E Protocol is open-source, MIT-licensed, and community-governed. We believe that the infrastructure agents run on should be as open as the internet they were trained on. If you believe that too, [come build with us](https://github.com/cynepiaadmin/a2e).*
+*The A2E Protocol is open-source, MIT-licensed, and community-governed. We believe that the infrastructure agents run on should be as open as the internet they were trained on. If you believe that too, [come build with us](https://github.com/a2eprotocol/python-sdk).*
