@@ -4,6 +4,12 @@ The A2E architecture is organized into three clean layers — Protocol, Runtime,
 
 ## System Diagram
 
+The full architecture diagram below shows how the Agent connects through the protocol and runtime layers to the 10 capability plugins:
+
+<iframe src="/docs/a2e-architecture.html" width="100%" height="850" frameborder="0" allowfullscreen style="border: 1px solid #1e293b; border-radius: 8px; margin: 16px 0; background: #020617;"></iframe>
+
+For a quick reference, here is the message flow as a simplified graph:
+
 ```mermaid
 flowchart TD
     A[Agent] -->|NDJSON| C[A2EClient]
@@ -44,7 +50,7 @@ The runtime orchestrates message flow. The `A2EServer` accepts connections (HTTP
 
 **Key files**: `a2e/core/server/`, `a2e/core/client/`, `a2e/core/transports/`
 
-### 3. Capability Layer — 9 Plugin Namespaces
+### 3. Capability Layer — 10 Plugin Namespaces
 
 All capability logic lives in plugins. Each namespace follows the same 3-file pattern:
 - `protocol.py` — Pydantic message models + `TYPE_MAP`
