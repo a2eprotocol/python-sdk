@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>A2E-Integrated Agent and Harness — Slides</title>
+<style>
+  /* ── Reset & Base ── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: #E8E7E2;
+    color: #1A1C1B;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Slide Container ── */
+  .slides { max-width: 1280px; margin: 0 auto; padding: 32px 24px; display: flex; flex-direction: column; gap: 28px; }
+
+  .slide {
+    background: #F6F5F1;
+    border-radius: 20px;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.06), 0 1px 4px rgba(0,0,0,0.04);
+    overflow: hidden;
+    position: relative;
+    aspect-ratio: 16 / 9;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── Slide Inner Content ── */
+  .slide-inner {
+    flex: 1;
+    padding: 48px 64px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* ── Decorative Elements ── */
+  .slide-inner::before {
+    content: '';
+    position: absolute;
+    top: -80px; right: -80px;
+    width: 280px; height: 280px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(180,87,53,0.04) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .slide-inner::after {
+    content: '';
+    position: absolute;
+    bottom: -60px; left: -60px;
+    width: 200px; height: 200px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(58,104,181,0.03) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  /* ── Slide Number Badge ── */
+  .slide-num {
+    position: absolute;
+    bottom: 20px; right: 28px;
+    font-size: 12px;
+    font-weight: 500;
+    color: #B0AFA8;
+    letter-spacing: 0.5px;
+  }
+
+  /* ── Logo Bar ── */
+  .logo-bar {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: auto;
+    opacity: 0.7;
+  }
+  .logo-bar .mark {
+    width: 28px; height: 28px;
+    background: #B45735;
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 700; color: #fff;
+  }
+  .logo-bar span {
+    font-size: 13px; font-weight: 500; color: #8A8A86;
+    letter-spacing: 0.3px;
+  }
+
+  /* ── Typography ── */
+  .slide-title {
+    font-size: 36px;
+    font-weight: 650;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+    color: #1A1C1B;
+    margin-bottom: 12px;
+  }
+  .slide-title .accent {
+    color: #B45735;
+  }
+  .slide-title .accent-blue {
+    color: #3A68B5;
+  }
+
+  .slide-subtitle {
+    font-size: 18px;
+    font-weight: 400;
+    color: #5A5C59;
+    line-height: 1.4;
+    max-width: 80%;
+  }
+
+  .slide-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 20px;
+  }
+
+  /* ── Content Grid ── */
+  .content-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-top: 16px;
+  }
+  .content-grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .content-grid.cols-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+
+  .grid-card {
+    background: rgba(255,255,255,0.55);
+    border: 1px solid rgba(0,0,0,0.05);
+    border-radius: 14px;
+    padding: 20px 22px;
+    transition: box-shadow 0.2s;
+  }
+  .grid-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.04); }
+
+  .grid-card h4 {
+    font-size: 14px;
+    font-weight: 600;
+    color: #B45735;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 6px;
+  }
+  .grid-card h4.blue { color: #3A68B5; }
+  .grid-card h4.green { color: #4A7250; }
+
+  .grid-card p {
+    font-size: 15px;
+    color: #3A3C3A;
+    line-height: 1.45;
+  }
+
+  .grid-card .big-num {
+    font-size: 32px;
+    font-weight: 700;
+    color: #B45735;
+    margin-bottom: 4px;
+  }
+
+  /* ── Code Blocks ── */
+  .code-block {
+    background: #1A1C1B;
+    border-radius: 12px;
+    padding: 18px 22px;
+    font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    color: #D4D4C8;
+    overflow-x: auto;
+    position: relative;
+  }
+  .code-block .kw { color: #7BB8E8; }
+  .code-block .str { color: #B5CE88; }
+  .code-block .cm { color: #6C6C66; }
+  .code-block .fn { color: #DCDC9E; }
+  .code-block .num { color: #B8A9E8; }
+  .code-block .op { color: #C8C8C0; }
+
+  .code-block.compact { padding: 12px 18px; font-size: 12px; line-height: 1.5; }
+
+  /* ── Diagrams ── */
+  .diagram {
+    display: flex; align-items: center; justify-content: center;
+    gap: 8px;
+    padding: 16px 0;
+    flex-wrap: wrap;
+  }
+
+  .diagram-box {
+    background: #EDECE8;
+    border: 1.5px solid #D8D7D2;
+    border-radius: 10px;
+    padding: 14px 20px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #2A2E2E;
+    text-align: center;
+    min-width: 100px;
+    position: relative;
+  }
+  .diagram-box.highlight {
+    background: #B45735;
+    border-color: #B45735;
+    color: #fff;
+  }
+  .diagram-box.highlight-blue {
+    background: #3A68B5;
+    border-color: #3A68B5;
+    color: #fff;
+  }
+  .diagram-box.highlight-green {
+    background: #4A7250;
+    border-color: #4A7250;
+    color: #fff;
+  }
+  .diagram-box.small { padding: 8px 14px; font-size: 12px; min-width: 80px; }
+
+  .diagram-arrow {
+    font-size: 20px; color: #9A9A96;
+    font-weight: 300;
+  }
+
+  .diagram-label {
+    font-size: 11px; color: #7A7A76;
+    text-align: center;
+    margin-top: 2px;
+  }
+
+  /* ── Layer Stack ── */
+  .layer-stack {
+    display: flex; flex-direction: column; gap: 4px;
+    width: 100%; max-width: 600px; margin: 0 auto;
+  }
+  .layer-stack .layer {
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    text-align: center;
+  }
+  .layer-stack .layer.l1 { background: #3A68B5; color: #fff; }
+  .layer-stack .layer.l2 { background: #4A7AB5; color: #fff; }
+  .layer-stack .layer.l3 { background: #6E94C0; color: #fff; }
+  .layer-stack .layer.sub {
+    background: #EDECE8;
+    color: #2A2E2E;
+    font-weight: 400;
+    font-size: 13px;
+    border: 1px solid #D8D7D2;
+  }
+
+  /* ── Pill Tags ── */
+  .pill-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+  .pill {
+    display: inline-block;
+    padding: 5px 14px;
+    border-radius: 100px;
+    font-size: 12px;
+    font-weight: 500;
+    background: #EDECE8;
+    color: #3A3C3A;
+    border: 1px solid #D8D7D2;
+  }
+  .pill.rust { background: rgba(180,87,53,0.1); border-color: rgba(180,87,53,0.2); color: #8A3E20; }
+  .pill.blue { background: rgba(58,104,181,0.08); border-color: rgba(58,104,181,0.15); color: #254B7C; }
+  .pill.green { background: rgba(74,114,80,0.1); border-color: rgba(74,114,80,0.2); color: #3A5C3E; }
+  .pill.dark { background: #1A1C1B; color: #D4D4C8; border-color: #1A1C1B; }
+
+  /* ── Callout ── */
+  .callout {
+    background: rgba(180,87,53,0.06);
+    border-left: 3px solid #B45735;
+    border-radius: 0 10px 10px 0;
+    padding: 14px 20px;
+    font-size: 14px;
+    color: #3A3C3A;
+    line-height: 1.45;
+    margin-top: 12px;
+  }
+  .callout.blue { background: rgba(58,104,181,0.06); border-left-color: #3A68B5; }
+  .callout.green { background: rgba(74,114,80,0.06); border-left-color: #4A7250; }
+
+  /* ── Full-width Content (Title Slides) ── */
+  .slide-title-center {
+    flex: 1;
+    display: flex; flex-direction: column;
+    justify-content: center; align-items: center;
+    text-align: center;
+    gap: 12px;
+  }
+  .slide-title-center .slide-title { font-size: 44px; max-width: 85%; }
+  .slide-title-center .slide-subtitle { max-width: 65%; }
+
+  /* ── Split Layout ── */
+  .split {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+    flex: 1;
+    align-items: center;
+  }
+  .split-left { display: flex; flex-direction: column; gap: 12px; }
+  .split-right { display: flex; flex-direction: column; gap: 12px; }
+
+  /* ── Steps / Timeline ── */
+  .steps { display: flex; flex-direction: column; gap: 8px; }
+  .step {
+    display: flex; gap: 12px; align-items: flex-start;
+    padding: 10px 16px;
+    background: rgba(255,255,255,0.4);
+    border-radius: 10px;
+  }
+  .step-num {
+    width: 24px; height: 24px;
+    background: #B45735;
+    color: #fff;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 600;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .step-num.blue { background: #3A68B5; }
+  .step-num.green { background: #4A7250; }
+  .step p { font-size: 14px; color: #3A3C3A; line-height: 1.4; }
+  .step .step-label { font-weight: 600; color: #1A1C1B; }
+
+  /* ── Table ── */
+  .table-wrap {
+    overflow-x: auto;
+    margin-top: 12px;
+  }
+  table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 13px;
+  }
+  th {
+    background: #EDECE8;
+    color: #3A3C3A;
+    font-weight: 600;
+    text-align: left;
+    padding: 10px 16px;
+    border-bottom: 2px solid #D8D7D2;
+  }
+  th:first-child { border-radius: 8px 0 0 0; }
+  th:last-child { border-radius: 0 8px 0 0; }
+  td {
+    padding: 9px 16px;
+    border-bottom: 1px solid #E2E1DC;
+    color: #3A3C3A;
+  }
+  tr:last-child td:first-child { border-radius: 0 0 0 8px; }
+  tr:last-child td:last-child { border-radius: 0 0 8px 0; }
+  tr:hover td { background: rgba(0,0,0,0.015); }
+
+  /* ── Footer Section ── */
+  .slide-footer {
+    border-top: 1px solid rgba(0,0,0,0.04);
+    padding: 12px 28px;
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 12px; color: #9A9A96;
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 900px) {
+    .slide-inner { padding: 28px 32px; }
+    .slide-title { font-size: 26px; }
+    .slide-subtitle { max-width: 100%; font-size: 15px; }
+    .content-grid { grid-template-columns: 1fr; }
+    .content-grid.cols-3, .content-grid.cols-4 { grid-template-columns: 1fr 1fr; }
+    .split { grid-template-columns: 1fr; gap: 20px; }
+    .slide-title-center .slide-title { font-size: 30px; }
+    .slide-title-center .slide-subtitle { max-width: 95%; }
+    .diagram { gap: 4px; }
+    .diagram-box { padding: 10px 14px; font-size: 12px; min-width: 70px; }
+  }
+
+  @media (max-width: 600px) {
+    .slide { border-radius: 12px; }
+    .slide-inner { padding: 20px 18px; }
+    .slide-title { font-size: 22px; }
+    .content-grid.cols-3, .content-grid.cols-4 { grid-template-columns: 1fr; }
+    .code-block { font-size: 11px; padding: 12px 14px; }
+  }
+</style>
+</head>
+<body>
+<div class="slides">
+
+  <!-- ════════════════════════════════════════ -->
+  <!-- SLIDE 1 — Title                         -->
+  <!-- ════════════════════════════════════════ -->
+  <div class="slide" id="s1">
+    <div class="slide-inner">
+      <div class="slide-title-center">
+        <div class="logo-bar" style="margin-bottom:8px; opacity:1;">
+          <div class="mark">A</div>
+          <span>A2E PROTOCOL</span>
+        </div>
+        <div class="slide-title">
+          Building an<br><span class="accent">A2E-Integrated</span> Agent &amp; Harness
+        </div>
+        <div class="slide-subtitle" style="text-align:center; max-width:75%;">
+          From environment plugin to RL loop — a complete walkthrough of the Agent-to-Environment protocol
+        </div>
+        <div class="pill-row" style="justify-content:center; margin-top:20px;">
+          <span class="pill rust">env</span>
+          <span class="pill blue">tools</span>
+          <span class="pill green">learn</span>
+          <span class="pill">memory</span>
+          <span class="pill dark">NDJSON</span>
+        </div>
+      </div>
+      <span class="slide-num">01 / 12</span>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════ -->
+  <!-- SLIDE 2 — The A2E Design Framework     -->
+  <!-- ════════════════════════════════════════ -->
+  <div class="slide" id="s2">
+    <div class="slide-inner">
+      <div class="logo-bar"><div class="mark">A</div><span>A2E PROTOCOL</span></div>
+      <div class="slide-body">
+        <div class="slide-title" style="margin-bottom:4px;">The <span class="accent">A2E Design Framework</span></div>
+        <div class="slide-subtitle" style="margin-bottom:8px;">Three layers that define how agents talk to environments</div>
+
+        <div class="content-grid cols-4" style="margin-top:16px;">
+          <div class="grid-card" style="border-top:3px solid #3A68B5;">
+            <h4 class="blue">Layer 1</h4>
+            <p><strong>Wire Protocol</strong><br>Typed NDJSON messages. Every interaction is a standardized request/response pair over a single transport.</p>
+          </div>
+          <div class="grid-card" style="border-top:3px solid #B45735;">
+            <h4>Layer 2</h4>
+            <p><strong>Plugin Runtime</strong><br>Thin execution kernel that loads plugins, routes messages by type, and manages session lifecycle.</p>
+          </div>
+          <div class="grid-card" style="border-top:3px solid #4A7250;">
+            <h4 class="green">Layer 3</h4>
+            <p><strong>Capability Namespaces</strong><br>10 standard namespaces — env, tools, memory, learn, proc, skills, toolkits, chains, mcp, subagents.</p>
+          </div>
+          <div class="grid-card" style="border-top:3px solid #2A2E2E;">
+            <h4 class="blue">Key Idea</h4>
+            <p>Like POSIX for agents — the protocol is the interface. The implementations are swappable plugins.</p>
+          </div>
+        </div>
+
+        <div class="callout" style="margin-top:16px;">
+          <strong>Design principle:</strong> The host has <em>no</em> global tool registry. It routes solely by <code>type_to_plugins</code> — every plugin declares what it handles, and the executor dispatches.
+        </div>
+      </div>
+      <span class="slide-num">02 / 12</span>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════ -->
+  <!-- SLIDE 3 — Strategic Value              -->
+  <!-- ════════════════════════════════════════ -->
+  <div class="slide" id="s3">
+    <div class="slide-inner">
+      <div class="logo-bar"><div class="mark">A</div><span>A2E PROTOCOL</span></div>
+      <div class="slide-body">
+        <div class="slide-title" style="margin-bottom:4px;">Strategic <span class="accent">Value</span></div>
+        <div class="slide-subtitle" style="margin-bottom:8px;">Three reasons the framework changes the economics of agent infrastructure</div>
+
+        <div class="content-grid cols-3" style="margin-top:16px;">
+          <div class="grid-card">
+            <div class="big-num">01</div>
+            <h4>Decoupling</h4>
+            <p>Agent code is coupled to every backend it talks to — until the protocol absorbs the churn. Swap the memory plugin from in-memory to SQLite to Pinecone. The agent never notices. The only cost: swap the plugin.</p>
+          </div>
+          <div class="grid-card">
+            <div class="big-num" style="color:#3A68B5;">02</div>
+            <h4 class="blue">Programmable Loop</h4>
+            <p><code>learn/adapt/req</code> runs in the same message flow as <code>env/step/req</code>. No separate training pipeline. No offline batch job. No vendor support ticket. The agent improves <em>between turns</em>.</p>
+          </div>
+          <div class="grid-card">
+            <div class="big-num" style="color:#4A7250;">03</div>
+            <h4 class="green">Ownership</h4>
+            <p>Every plugin is a Python class you control. The env backend is yours. The adaptation strategy is yours. The audit log is yours. When training data is just <code>learn/feedback/req</code> messages in your JSONL, you're not a tenant.</p>
+          </div>
+        </div>
+
+        <div class="callout blue" style="margin-top:8px;">
+          <strong>The argument:</strong> In an era where software production cost trends toward zero, the cost of <em>churn</em> — swapping a memory backend or migrating off a deprecated platform — trends up. A2E inverts this tradeoff.
+        </div>
+      </div>
+      <span class="slide-num">03 / 12</span>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════ -->
+  <!-- SLIDE 4 — The 10 Capability Namespaces -->
+  <!-- ════════════════════════════════════════ -->
+  <div class="slide" id="s4">
+    <div class="slide-inner">
+      <div class="logo-bar"><div class="mark">A</div><span>A2E PROTOCOL</span></div>
+      <div class="slide-body" style="justify-content:flex-start;">
+        <div class="slide-title" style="margin-bottom:4px;">10 <span class="accent">Capability Namespaces</span></div>
+        <div class="slide-subtitle" style="margin-bottom:4px;">Every interaction is a typed message. Every capability is a plugin.</div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Namespace</th><th>What It Does</th><th>Key Messages</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>env</strong></td><td>RL environments: step, reset, observe, reward</td><td><code>env/reset/req</code>, <code>env/step/req</code>, <code>env/observe/req</code></td></tr>
+              <tr><td><strong>tools</strong></td><td>Named callable functions with structured I/O</td><td><code>tool/list/req</code>, <code>tool/call/req</code></td></tr>
+              <tr><td><strong>memory</strong></td><td>Three-tier: working, episodic, semantic</td><td><code>memory/store/req</code>, <code>memory/recall/req</code></td></tr>
+              <tr><td><strong>learn</strong></td><td>Feedback, experience replay, adaptation</td><td><code>learn/feedback/req</code>, <code>learn/adapt/req</code></td></tr>
+              <tr><td><strong>proc</strong></td><td>Long-running subprocess management</td><td><code>proc/spawn/req</code>, <code>proc/signal/req</code></td></tr>
+              <tr><td><strong>skills</strong></td><td>Named, versioned, sandboxed execution</td><td><code>skill/call/req</code>, <code>skill/list/req</code></td></tr>
+              <tr><td><strong>chains</strong></td><td>DAG pipelines with branching</td><td><code>chain/execute/req</code>, <code>chain/list/req</code></td></tr>
+              <tr><td><strong>mcp / subagents / toolkits</strong></td><td>MCP bridge, multi-agent orchestration, tool bundles</td><td>Extension namespaces via plugin registration</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout" style="margin-top:8px; font-size:13px;">
+          This post focuses on <strong>env</strong> + <strong>tools</strong> + <strong>memory</strong> + <strong>learn</strong> — the four pillars of a complete RL agent loop.
+        </div>
+      </div>
+      <span class="slide-num">04 / 12</span>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════ -->
+  <!-- SLIDE 5 — Agent Client Setup           -->
+  <!-- ════════════════════════════════════════ -->
+  <div class="slide" id="s5">
+    <div class="slide-inner">
+      <div class="logo-bar"><div class="mark">A</div><span>A2E PROTOCOL</span></div>
+      <div class="slide-body">
+        <div class="slide-title" style="margin-bottom:4px;">The <span class="accent">Agent Client</span></div>
+        <div class="slide-subtitle" style="margin-bottom:6px;">Single session. Single transport. Multiple capabilities.</div>
+
+        <div class="split" style="gap:24px;">
+          <div class="split-left">
+            <div class="code-block compact" style="font-size:11px;">
+              <span class="kw">class</span> EnvClient:<br>
+              &nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">def</span> <span class="fn">__init__</span>(self, logger):<br>
+              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;transport = build_transport(HTTPTransportConfig(<br>
+              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;base_url=<span class="str">"http://localhost:8765"</span><br>
+              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;))<br>
+              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;self.client = A2EClient(<br>
+              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;transport=transport,<br>
+              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;agent_id=<span class="str">"react-agent"</span>,<br>
+              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;agent_caps=[ENV, PROC, TOOLKITS]<br>
+              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)<br><br>
+              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;self.env = EnvAPI(self.client)<br>
+              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;self.memory = MemoryAPI(self.client)<br>
+              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;self.learn = LearnAPI(self.client)<br>
+              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;self.tools = ToolAPI(self.client)
+            </div>
+          </div>
+          <div class="split-right">
+            <div class="grid-card">
+              <h4>Key Pattern</h4>
+              <p>Every capability <strong>shares the same transport</strong>. One NDJSON connection, one <code>A2EClient</code>, N capability wrappers. No separate connections to a tool server, a memory server, and an env server.</p>
+            </div>
+            <div class="grid-card">
+              <h4 class="blue">To change backends</h4>
+              <p>Swap the transport config (HTTP → Direct → Subprocess). Or swap the plugin on the host. <strong>The agent code never changes.</strong></p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <span class="slide-num">05 / 12</span>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════ -->
+  <!-- SLIDE 6 — The ReAct Loop               -->
+  <!-- ════════════════════════════════════════ -->
+  <div class="slide" id="s6">
+    <div class="slide-inner">
+      <div class="logo-bar"><div class="mark">A</div><span>A2E PROTOCOL</span></div>
+      <div class="slide-body">
+        <div class="slide-title" style="margin-bottom:4px;">The Multi-Capability <span class="accent">ReAct Loop</span></div>
+        <div class="slide-subtitle" style="margin-bottom:6px;">Four dispatch branches, one protocol session</div>
+
+        <div class="diagram" style="gap:4px;">
+          <div class="diagram-box highlight">observe</div>
+          <span class="diagram-arrow">→</span>
+          <div class="diagram-box highlight-blue">recall</div>
+          <span class="diagram-arrow">→</span>
+          <div class="diagram-box">plan</div>
+          <span class="diagram-arrow">→</span>
+          <div class="diagram-box highlight-green">act</div>
+          <span class="diagram-arrow">→</span>
+          <div class="diagram-box" style="border:1.5px dashed #B45735;">learn</div>
+        </div>
+
+        <div class="content-grid" style="margin-top:8px;">
+          <div class="grid-card" style="border-left:3px solid #B45735;">
+            <h4>Tool Action</h4>
+            <p><code>tools.call("read_file", {path})</code><br>Call named functions with structured I/O. Results flow back as <code>ToolResult</code> with success/failure, output, and timing.</p>
+          </div>
+          <div class="grid-card" style="border-left:3px solid #3A68B5;">
+            <h4 class="blue">Env Action</h4>
+            <p><code>env.step(episode_id, action)</code><br>Send action, receive <code>next_state + reward + done</code>. The core RL primitive — test and training in one message.</p>
+          </div>
+          <div class="grid-card" style="border-left:3px solid #4A7250;">
+            <h4 class="green">Skill Action</h4>
+            <p><code>skills.call("analyze", {input})</code><br>Sandboxed execution units. Versioned, tagged, with streaming event support for long-running operations.</p>
+          </div>
+          <div class="grid-card" style="border-left:3px solid #2A2E2E;">
+            <h4>Chain Action</h4>
+            <p><code>chains.run(nodes, entry_node)</code><br>DAG pipelines with branching, fan-out, and node-level event streaming. For complex multi-step reasoning.</p>
+          </div>
+        </div>
+      </div>
+      <span class="slide-num">06 / 12</span>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════ -->
+  <!-- SLIDE 7 — Learning From Each Step      -->
+  <!-- ════════════════════════════════════════ -->
+  <div class="slide" id="s7">
+    <div class="slide-inner">
+      <div class="logo-bar"><div class="mark">A</div><span>A2E PROTOCOL</span></div>
+      <div class="slide-body">
+        <div class="slide-title" style="margin-bottom:4px;">Learning <span class="accent">from Each Step</span></div>
+        <div class="slide-subtitle" style="margin-bottom:6px;">On-policy RL over a standard protocol</div>
+
+        <div class="split" style="gap:20px;">
+          <div class="split-left">
+            <div class="steps">
+              <div class="step">
+                <div class="step-num">1</div>
+                <p><span class="step-label">Feedback</span> — <code>learn.feedback(polarity, score, dimension, source)</code> records a structured evaluation signal tied to the action just taken.</p>
+              </div>
+              <div class="step">
+                <div class="step-num blue">2</div>
+                <p><span class="step-label">Memory</span> — <code>memory.remember(key, value, tier="episodic")</code> stores the turn's trajectory context for future retrieval.</p>
+              </div>
+              <div class="step">
+                <div class="step-num green">3</div>
+                <p><span class="step-label">Adapt</span> — <code>learn.adapt(strategy="ucb1")</code> updates routing weights every 5 steps. The agent improves <em>between turns</em>.</p>
+              </div>
+            </div>
+          </div>
+          <div class="split-right">
+            <div class="callout" style="margin-bottom:8px;">
+              <strong>On-policy by design:</strong> The policy that generated the experience is the same policy that gets updated. Credit assignment is exact. Learning is immediate.
+            </div>
+            <div class="grid-card">
+              <h4>Feedback Dimensions</h4>
+              <div class="pill-row" style="margin-top:4px;">
+                <span class="pill rust">correctness</span>
+                <span class="pill blue">helpfulness</span>
+                <span class="pill green">safety</span>
+                <span class="pill">plan_quality</span>
+                <span class="pill">tone</span>
+              </div>
+            </div>
+            <div class="grid-card">
+              <h4>Feedback Sources</h4>
+              <div class="pill-row" style="margin-top:4px;">
+                <span class="pill rust">HUMAN</span>
+                <span class="pill blue">ENV</span>
+                <span class="pill green">SELF</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <span class="slide-num">07 / 12</span>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════ -->
+  <!-- SLIDE 8 — Building the Environment     -->
+  <!-- ════════════════════════════════════════ -->
+  <div class="slide" id="s8">
+    <div class="slide-inner">
+      <div class="logo-bar"><div class="mark">A</div><span>A2E PROTOCOL</span></div>
+      <div class="slide-body">
+        <div class="slide-title" style="margin-bottom:4px;">Building the <span class="accent">Harness</span></div>
+        <div class="slide-subtitle" style="margin-bottom:6px;">Three layers: Environment Plugin → Host Adapter → A2E Server</div>
+
+        <div class="content-grid" style="margin-top:12px;">
+          <div class="grid-card">
+            <h4>Layer 1: EnvPlugin</h4>
+            <p>Subclass <code>EnvPlugin</code>, implement <code>on_reset()</code> and <code>on_step()</code>. The base class handles protocol dispatch, <code>req_id</code> injection, error wrapping, and audit logging.</p>
+            <div class="code-block compact" style="margin-top:8px; font-size:11px;">
+              <span class="kw">class</span> CounterEnv(EnvPlugin):<br>
+              &nbsp;&nbsp;&nbsp;&nbsp;name = <span class="str">"counter"</span><br>
+              &nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">def</span> <span class="fn">on_reset</span>(self, seed, options):<br>
+              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;self.state = EnvState(count=<span class="num">0</span>)<br>
+              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">return</span> self.state
+            </div>
+          </div>
+          <div class="grid-card">
+            <h4>Layer 2: Host Adapter</h4>
+            <p>Manages episode → env mapping. Each <code>env/step</code> auto-records an <code>(s, a, r, s', done)</code> experience tuple via the optional learning hook.</p>
+            <div class="callout blue" style="margin-top:8px; font-size:12px;">
+              <strong>Auto-learning:</strong> Every step produces a training sample. The agent doesn't have to call an additional API.
+            </div>
+          </div>
+          <div class="grid-card">
+            <h4>Layer 3: Server Wiring</h4>
+            <p>Load plugins via <code>config.yaml</code>. Each plugin registers its message types. Agent negotiates capabilities at handshake.</p>
+            <div class="code-block compact" style="margin-top:8px; font-size:11px;">
+              plugins:<br>
+              &nbsp;&nbsp;- name: counter_env<br>
+              &nbsp;&nbsp;&nbsp;&nbsp;cls: .counter_env.CounterEnv<br>
+              &nbsp;&nbsp;- name: mymemory<br>
+              &nbsp;&nbsp;&nbsp;&nbsp;cls: .inmemory.InMemoryPlugin
+            </div>
+          </div>
+        </div>
+      </div>
+      <span class="slide-num">08 / 12</span>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════ -->
+  <!-- SLIDE 9 — End-to-End Data Flow         -->
+  <!-- ════════════════════════════════════════ -->
+  <div class="slide" id="s9">
+    <div class="slide-inner">
+      <div class="logo-bar"><div class="mark">A</div><span>A2E PROTOCOL</span></div>
+      <div class="slide-body">
+        <div class="slide-title" style="margin-bottom:4px;">End-to-End <span class="accent">Data Flow</span></div>
+        <div class="slide-subtitle" style="margin-bottom:6px;">One episode, four plugin handoffs</div>
+
+        <div style="display:flex; align-items:center; justify-content:center; gap:6px; flex-wrap:wrap; margin-top:4px;">
+          <div class="diagram-box small">AGENT</div>
+          <span class="diagram-arrow">→</span>
+          <div class="diagram-box small highlight-blue" style="min-width:120px;">env/reset/req</div>
+          <span class="diagram-arrow">→</span>
+          <div class="diagram-box small highlight">EnvPlugin</div>
+
+          <div style="width:100%; height:6px;"></div>
+
+          <div class="diagram-box small">AGENT</div>
+          <span class="diagram-arrow">→</span>
+          <div class="diagram-box small highlight-blue" style="min-width:120px;">memory/recall/req</div>
+          <span class="diagram-arrow">→</span>
+          <div class="diagram-box small highlight-green">MemoryPlugin</div>
+
+          <div style="width:100%; height:6px;"></div>
+
+          <div class="diagram-box small">AGENT</div>
+          <span class="diagram-arrow">→</span>
+          <div class="diagram-box small highlight-blue" style="min-width:120px;">env/step/req</div>
+          <span class="diagram-arrow">→</span>
+          <div class="diagram-box small highlight">EnvPlugin</div>
+          <span class="diagram-arrow">→</span>
+          <div class="diagram-box small" style="border:1.5px dashed #B45735;">auto-learn</div>
+
+          <div style="width:100%; height:6px;"></div>
+
+          <div class="diagram-box small">AGENT</div>
+          <span class="diagram-arrow">→</span>
+          <div class="diagram-box small highlight-blue" style="min-width:120px;">learn/feedback/req</div>
+          <span class="diagram-arrow">→</span>
+          <div class="diagram-box small highlight-green">LearnPlugin</div>
+
+          <div style="width:100%; height:6px;"></div>
+
+          <div class="diagram-box small">AGENT</div>
+          <span class="diagram-arrow">→</span>
+          <div class="diagram-box small highlight-blue" style="min-width:120px;">learn/adapt/req</div>
+          <span class="diagram-arrow">→</span>
+          <div class="diagram-box small highlight-green" style="border:2px solid #4A7250;">↑ updated weights</div>
+        </div>
+
+        <div class="callout" style="margin-top:12px; font-size:13px;">
+          <strong>One protocol session.</strong> Four plugins. Zero shared state. The executor routes by message type — every message finds its handler through the <code>type_to_plugins</code> dispatch table.
+        </div>
+      </div>
+      <span class="slide-num">09 / 12</span>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════ -->
+  <!-- SLIDE 10 — Architecture Diagram        -->
+  <!-- ════════════════════════════════════════ -->
+  <div class="slide" id="s10">
+    <div class="slide-inner">
+      <div class="logo-bar"><div class="mark">A</div><span>A2E PROTOCOL</span></div>
+      <div class="slide-body">
+        <div class="slide-title" style="margin-bottom:4px;">Architecture <span class="accent">Diagram</span></div>
+        <div class="slide-subtitle" style="margin-bottom:6px;">The three-layer stack with the protocol as the interface</div>
+
+        <div style="display:flex; gap:40px; align-items:stretch; flex:1; margin-top:4px;">
+          <!-- Agent Side -->
+          <div style="flex:1; display:flex; flex-direction:column; gap:4px;">
+            <div style="text-align:center; font-size:12px; font-weight:600; color:#5A5C59; margin-bottom:4px;">YOUR AGENT</div>
+            <div style="background:#1A1C1B; border-radius:12px; padding:16px 20px; flex:1; display:flex; flex-direction:column; justify-content:center; gap:8px;">
+              <div class="pill dark" style="display:block; text-align:center; font-size:12px;">ReAct or DeepAgent loop</div>
+              <div class="pill dark" style="display:block; text-align:center; font-size:12px;">Any model (Claude, GPT, etc.)</div>
+              <div class="pill dark" style="display:block; text-align:center; font-size:12px;">Tool-aware planning</div>
+            </div>
+            <div class="diagram-label">Sends typed NDJSON messages</div>
+          </div>
+
+          <!-- Protocol -->
+          <div style="flex:0.8; display:flex; flex-direction:column; gap:4px;">
+            <div style="text-align:center; font-size:12px; font-weight:600; color:#B45735; margin-bottom:4px;">A2E PROTOCOL</div>
+            <div style="background:rgba(180,87,53,0.06); border:2px solid rgba(180,87,53,0.2); border-radius:12px; padding:12px 16px; flex:1; display:flex; flex-direction:column; justify-content:center; gap:6px;">
+              <div class="pill rust" style="display:block; text-align:center; font-size:11px;">NDJSON messages</div>
+              <div class="pill rust" style="display:block; text-align:center; font-size:11px;">env/*, tool/*, learn/*</div>
+              <div class="pill rust" style="display:block; text-align:center; font-size:11px;">Capability negotiation</div>
+              <div class="pill rust" style="display:block; text-align:center; font-size:11px;">Audit logging</div>
+            </div>
+            <div class="diagram-label">The interface you own</div>
+          </div>
+
+          <!-- Host Side -->
+          <div style="flex:1.2; display:flex; flex-direction:column; gap:4px;">
+            <div style="text-align:center; font-size:12px; font-weight:600; color:#3A68B5; margin-bottom:4px;">YOUR HOST (swappable plugins)</div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; flex:1;">
+              <div class="grid-card" style="padding:10px 14px; display:flex; flex-direction:column; justify-content:center;">
+                <h4 style="font-size:11px;">EnvPlugin</h4>
+                <p style="font-size:11px;">reset, step, observe, close</p>
+              </div>
+              <div class="grid-card" style="padding:10px 14px; display:flex; flex-direction:column; justify-content:center;">
+                <h4 style="font-size:11px;" class="blue">ToolPlugin</h4>
+                <p style="font-size:11px;">list, call, search, events</p>
+              </div>
+              <div class="grid-card" style="padding:10px 14px; display:flex; flex-direction:column; justify-content:center;">
+                <h4 style="font-size:11px;" class="green">MemoryPlugin</h4>
+                <p style="font-size:11px;">store, recall, forget, merge</p>
+              </div>
+              <div class="grid-card" style="padding:10px 14px; display:flex; flex-direction:column; justify-content:center;">
+                <h4 style="font-size:11px;">LearnPlugin</h4>
+                <p style="font-size:11px;">feedback, experience, adapt</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="callout blue" style="margin-top:8px; font-size:13px;">
+          <strong>Protocol-first, not SDK-first.</strong> Agent and host communicate over typed NDJSON. They don't share imports, class hierarchies, or runtime state. The protocol is the contract.
+        </div>
+      </div>
+      <span class="slide-num">10 / 12</span>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════ -->
+  <!-- SLIDE 11 — Key Design Principles       -->
+  <!-- ════════════════════════════════════════ -->
+  <div class="slide" id="s11">
+    <div class="slide-inner">
+      <div class="logo-bar"><div class="mark">A</div><span>A2E PROTOCOL</span></div>
+      <div class="slide-body">
+        <div class="slide-title" style="margin-bottom:4px;">Key Design <span class="accent">Principles</span></div>
+        <div class="slide-subtitle" style="margin-bottom:8px;">What makes this architecture different</div>
+
+        <div class="content-grid" style="margin-top:12px;">
+          <div class="grid-card" style="border-top:3px solid #B45735;">
+            <h4>Protocol is the Interface</h4>
+            <p>Not a framework, not an SDK you build on top of — a standard wire format between agent and environment. Like POSIX, the interface is the product; implementations are interchangeable.</p>
+          </div>
+          <div class="grid-card" style="border-top:3px solid #3A68B5;">
+            <h4 class="blue">Multi-Capability Dispatch</h4>
+            <p>The agent calls tools, steps environments, invokes skills, runs chains, and records learning — all through the same session. The executor routes by message type. Adding a capability means adding a plugin.</p>
+          </div>
+          <div class="grid-card" style="border-top:3px solid #4A7250;">
+            <h4 class="green">Learning is First-Class</h4>
+            <p>Feedback, experience, and adaptation are protocol messages. The same message bus carries <code>env/step/req</code> and <code>learn/feedback/req</code>. The loop isn't a hack — it's architecture.</p>
+          </div>
+          <div class="grid-card" style="border-top:3px solid #2A2E2E;">
+            <h4>Harness Owns the Integration</h4>
+            <p>Auto-learning hooks, episode-to-env tracking, reward computation — these live in the harness, not the agent. The agent sends simple messages. The harness does the orchestration.</p>
+          </div>
+        </div>
+
+        <div class="callout" style="margin-top:12px;">
+          <strong>Build your agents against the protocol.</strong> Own your harness. Swap your plugins. The agent never notices.
+        </div>
+      </div>
+      <span class="slide-num">11 / 12</span>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════ -->
+  <!-- SLIDE 12 — Closing / CTA               -->
+  <!-- ════════════════════════════════════════ -->
+  <div class="slide" id="s12">
+    <div class="slide-inner">
+      <div class="slide-title-center">
+        <div class="logo-bar" style="margin-bottom:12px; opacity:1; justify-content:center;">
+          <div class="mark">A</div>
+          <span>A2E PROTOCOL</span>
+        </div>
+        <div class="slide-title">
+          Own the <span class="accent">Interface</span>.<br>Swap the <span class="accent-blue">Plugins</span>.
+        </div>
+        <div class="slide-subtitle" style="text-align:center; max-width:70%;">
+          The agent never notices.
+        </div>
+        <div style="margin-top:24px; display:flex; gap:12px; flex-wrap:wrap; justify-content:center;">
+          <span class="pill dark">a2eprotocol.github.io/docs</span>
+          <span class="pill rust">github.com/a2eprotocol/python-sdk</span>
+          <span class="pill blue">env+tool+memory+learn</span>
+        </div>
+        <div style="margin-top:28px; display:flex; gap:10px; justify-content:center;">
+          <div class="diagram-box small">agent.py</div>
+          <span class="diagram-arrow" style="font-size:16px;">→</span>
+          <div class="diagram-box small highlight-blue">A2E messages</div>
+          <span class="diagram-arrow" style="font-size:16px;">→</span>
+          <div class="diagram-box small highlight">host adapter</div>
+          <span class="diagram-arrow" style="font-size:16px;">→</span>
+          <div class="diagram-box small highlight-green">learn</div>
+        </div>
+      </div>
+      <span class="slide-num">12 / 12</span>
+    </div>
+  </div>
+
+</div>
+
+<div style="max-width:1280px; margin:0 auto; padding:8px 24px 40px; text-align:center; color:#8A8A86; font-size:13px;">
+  A2E Protocol &mdash; Agent-to-Environment &mdash; <a href="https://a2eprotocol.github.io/docs" style="color:#B45735; text-decoration:none;">docs</a>
+</div>
+
+</body>
+</html>

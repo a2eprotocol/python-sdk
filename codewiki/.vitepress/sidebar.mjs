@@ -85,7 +85,9 @@ export default [
     text: "Blog",
     collapsed: false,
     items: [
-      { text: "The Harness Is the Product", link: "/blog/2026-05-21-the-harness-is-the-product" }
+      { text: "The Harness Is the Product", link: "/blog/2026-05-21-the-harness-is-the-product" },
+      { text: "Building an A2E-Integrated Agent and Harness", link: "/blog/2026-09-09-building-a2e-agent-harness" },
+      { text: "Slides: A2E-Integrated Agent and Harness", link: "/blog/2026-09-09-building-a2e-agent-harness-slides.html" }
     ]
   }
 ]
