@@ -63,22 +63,35 @@ class ToolDefinition(BaseModel):
     tags: list[str] = Field(default_factory=list)
     version: str = "1.0.0"
     toolkit: Optional[str] = None  # Which toolkit binds it.
+    defer_loading: bool = False    # On-demand discovery — exclude from initial list, searchable only
 
 
 class MessageType(str, Enum):
     # Discovery
     TOOL_LIST_REQ = "tool/list/req"
     TOOL_LIST_RESP = "tool/list/resp"
+    # Execution
     TOOL_EVENT = "tool/event"
     TOOL_CALL_REQ = "tool/call/req"
     TOOL_CALL_RESP = "tool/call/resp"
 
 
 class ToolListRequest(A2EMessage):
-    """Agent → Host.  Enumerate available native tools."""
+    """Agent → Host.  Enumerate/search available native tools.
+
+    When `query` is empty (default): returns non-deferred tools only
+    (the active set the model should always see).
+
+    When `query` is set: searches all tools (name/description/tags match),
+    including deferred ones if `include_deferred` is True.
+
+    `filter_tags` narrows results to tools that have ALL specified tags.
+    """
     type: MessageType = MessageType.TOOL_LIST_REQ
     filter_kind: str = ""       # empty = return all
     filter_tags: list[str] = Field(default_factory=list)
+    query: str = ""             # search query; empty = list mode
+    include_deferred: bool = False  # include deferred tools in results
 
 
 class ToolListResponse(A2EMessage):

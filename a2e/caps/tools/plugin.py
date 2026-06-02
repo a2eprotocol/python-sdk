@@ -52,6 +52,49 @@ class ToolPlugin(A2EPlugin):
         raise NotImplementedError
 
     # ---------------------------------------------------------------------
+    # OPTIONAL: TOOL SEARCH (on-demand discovery)
+    # ---------------------------------------------------------------------
+    def _search_tools(
+        self,
+        query: str,
+        filter_tags: list[str] | None = None,
+        tools: list[ToolDefinition] | None = None,
+    ) -> List[ToolDefinition]:
+        """
+        Default search: case-insensitive substring match against name/description.
+
+        Override to plug in BM25, embeddings, or custom search strategies.
+        Subclasses that call super() and extend the result list are also
+        supported — the base impl covers static tool definitions.
+
+        `tools` — optional pre-fetched tool list. When None, calls
+        ``_list_tools()`` to get the full set.
+        """
+        query_lower = query.lower()
+        filter_tags = filter_tags or []
+        results: list[ToolDefinition] = []
+        source = self._list_tools() if tools is None else tools
+
+        for tool in source:
+            # Tag pre-filter (AND semantics — tool must have ALL filter tags)
+            if filter_tags:
+                tool_tags_lower = {t.lower() for t in tool.tags}
+                if not all(t.lower() in tool_tags_lower for t in filter_tags):
+                    continue
+
+            # Query match: name or description contains the query string
+            if query_lower in tool.name.lower() or query_lower in tool.description.lower():
+                results.append(tool)
+                continue
+
+            # Tag match: any tag contains the query string
+            if any(query_lower in t.lower() for t in tool.tags):
+                results.append(tool)
+                continue
+
+        return results
+
+    # ---------------------------------------------------------------------
     # REQUIRED: EXECUTION
     # ---------------------------------------------------------------------
     def _execute_tool(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
@@ -137,14 +180,32 @@ class ToolPlugin(A2EPlugin):
         t0 = time.monotonic()
 
         # -------------------------------------------------------------
-        # TOOL LIST
+        # TOOL LIST + SEARCH  — unified
+        #   query="" (default): return non-deferred tools only
+        #   query="..."      : search name/desc/tags, respect include_deferred
         # -------------------------------------------------------------
         if isinstance(msg, ToolListRequest):
             try:
                 definitions = self._list_tools()
+
+                # Search mode: filter by query string
+                if msg.query:
+                    definitions = self._search_tools(
+                        msg.query,
+                        filter_tags=msg.filter_tags or None,
+                        tools=definitions,  # pass full list as source
+                    )
+                else:
+                    # List mode: exclude deferred by default
+                    if not msg.include_deferred:
+                        definitions = [
+                            d for d in definitions
+                            if not d.defer_loading
+                        ]
+
                 response = ToolListResponse(
                     req_id=msg.id,
-                    tools=[definition.model_dump() for definition in definitions]
+                    tools=[d.model_dump() for d in definitions],
                 )
             except Exception as error:
                 response = A2EError(**{

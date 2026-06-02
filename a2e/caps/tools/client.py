@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import pdb
 import uuid
 from typing import List, Callable
@@ -28,11 +30,25 @@ class ToolAPI:
         self,
         kind: str = "",
         tags: list[str] | None = None,
+        query: str = "",
+        include_deferred: bool = False,
         timeout: int = 10,
     ) -> List[ToolDefinition]:
+        """List or search available tools.
+
+        When ``query`` is empty (default): returns the active tool set
+        (non-deferred tools only).
+
+        When ``query`` is set: searches all tools by name/description/tags.
+        Set ``include_deferred=True`` to also search deferred tools.
+
+        ``tags`` narrows results to tools with ALL specified tags.
+        """
         req = ToolListRequest(
             filter_kind=kind,
-            filter_tags=tags or []
+            filter_tags=tags or [],
+            query=query,
+            include_deferred=include_deferred,
         )
         resp = self._c.rpc(req, timeout=timeout)
         if not isinstance(resp, ToolListResponse):

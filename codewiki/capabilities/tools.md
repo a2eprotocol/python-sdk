@@ -29,6 +29,7 @@ The **tools** capability provides native environment tool execution — primitiv
 | `tags` | `list[str]` | Classification tags |
 | `version` | `str` | Tool version |
 | `toolkit` | `str` | Parent toolkit name |
+| `defer_loading` | `bool` | Exclude from initial list; discoverable via search |
 
 ### ToolParameter
 
@@ -40,6 +41,15 @@ The **tools** capability provides native environment tool execution — primitiv
 | `required` | `bool` | Whether this parameter is required |
 | `enum` | `list` | Allowed values |
 | `properties` | `list[ToolParameter]` | Nested object properties |
+
+### ToolListRequest
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `filter_kind` | `str` | Tool kind filter (empty = all) |
+| `filter_tags` | `list[str]` | Tag filter (AND semantics) |
+| `query` | `str` | Search query — empty = list mode, non-empty = search mode |
+| `include_deferred` | `bool` | Include deferred tools in results |
 
 ### ToolCallRequest
 
@@ -90,12 +100,16 @@ class ToolPlugin(A2EPlugin):
     @abstractmethod
     def _execute_tool(self, tool_name: str, arguments: dict) -> dict: ...
 
+    def _search_tools(self, query, filter_tags=None, tools=None) -> list[ToolDefinition]:
+        """Default: substring match. Override for BM25/embeddings."""
+
     def set_event_callback(self, cb): ...
     def emit(self, kind, data): ...  # Build and send ToolEvent
 ```
 
 **Handler**: `handle(msg)` dispatches:
-- `ToolListRequest` → calls `_list_tools()`, returns `ToolListResponse`
+- `ToolListRequest` with empty `query` → calls `_list_tools()`, filters out `defer_loading=True`, returns `ToolListResponse`
+- `ToolListRequest` with non-empty `query` → calls `_search_tools()`, returns `ToolListResponse`
 - `ToolCallRequest` → calls `_execute_tool()`, returns `ToolCallResponse` or `A2EError`
 
 ## ToolAPI (Client)
@@ -105,9 +119,17 @@ from a2e.caps.tools.client import ToolAPI
 
 tools = ToolAPI(client)
 
-# List available tools
-tool_list = tools.list(kind=None, tags=None)
+# List active (non-deferred) tools
+tool_list = tools.list()
 # Returns List[ToolDefinition]
+
+# Search all tools by name/description/tags (including deferred)
+search_results = tools.list(query="github", include_deferred=True)
+for t in search_results:
+    print(f"  {t.name}: {t.description}")
+
+# Filter by tags
+network_tools = tools.list(tags=["network"])
 
 # Call a tool
 result = tools.call(

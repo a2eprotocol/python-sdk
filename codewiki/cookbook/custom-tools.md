@@ -79,6 +79,7 @@ class HTTPToolsPlugin(A2EPlugin):
                 tags=["http", "network", "read"],
                 version="1.0.0",
                 toolkit=None,
+                defer_loading=False,
             ),
             ToolDefinition(
                 name="http_post",
@@ -126,6 +127,7 @@ class HTTPToolsPlugin(A2EPlugin):
                 tags=["http", "network", "write"],
                 version="1.0.0",
                 toolkit=None,
+                defer_loading=True,  # on-demand discovery; not in the active set
             ),
         ]
 
@@ -320,6 +322,18 @@ network_tools = tools.list(tags=["network"])
 print(f"Network tools: {[t.name for t in network_tools]}")
 
 # ============================================================
+# 1b. On-demand tool search (discover deferred tools)
+# ============================================================
+
+search_results = tools.list(query="post", include_deferred=True)
+print(f"Tools matching 'post': {[t.name for t in search_results]}")
+for t in search_results:
+    print(f"  {t.name} (v{t.version}): {t.description}")
+    for p in t.input_parameters:
+        req = "required" if p.required else "optional"
+        print(f"    - {p.name} ({p.type}, {req}): {p.description}")
+
+# ============================================================
 # 2. Simple tool call
 # ============================================================
 
@@ -477,3 +491,5 @@ client.disconnect()
 - **Use correlation_id**: Ties tool calls to agent turns for audit and tracing.
 - **Handle errors gracefully**: Return `ToolResult(success=False, error=...)` rather than raising exceptions — the plugin wrapper converts uncaught exceptions to `A2EError`.
 - **Keep tools stateless**: Tools should not carry state between calls. If you need state, use the memory capability instead.
+- **Use `defer_loading=True`** for infrequently used tools: They won't consume tokens in the initial tool list but remain discoverable via `tools.list(query=...)`. Mark your 3-5 most-used tools with `defer_loading=False` (the default) so they're always in the active set.
+- **Override `_search_tools()`** for custom search: The default substring match works for small tool sets. For MCP-scale libraries (500+ tools), override with BM25, embedding similarity, or keyword indexing.

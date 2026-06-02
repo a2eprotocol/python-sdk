@@ -34,7 +34,11 @@ sequenceDiagram
 
 ### tool/list/req — ToolListRequest
 
-Agent → Host. Enumerate available native tools.
+Agent → Host. List or search available native tools.
+
+When `query` is empty (default): returns non-deferred tools only (the active set).
+When `query` is set: searches tools by name/description/tags, including deferred
+ones if `include_deferred` is True.
 
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
@@ -43,7 +47,9 @@ Agent → Host. Enumerate available native tools.
 | `version` | `str` | Yes | `"1.0"` | Protocol version |
 | `ts` | `float` | Yes | auto | Unix epoch timestamp |
 | `filter_kind` | `str` | No | `""` | Tool kind filter (empty = all) |
-| `filter_tags` | `list[str]` | No | `[]` | Tag filter list |
+| `filter_tags` | `list[str]` | No | `[]` | Tag filter list (AND semantics) |
+| `query` | `str` | No | `""` | Search query — empty = list mode, non-empty = search mode |
+| `include_deferred` | `bool` | No | `False` | Include deferred tools in results (search mode) |
 
 ### tool/list/resp — ToolListResponse
 
@@ -128,6 +134,7 @@ Host → Agent. Zero or more streaming events during a tool call. Extends `A2EEv
 | `tags` | `list[str]` | No | `[]` | Classification tags |
 | `version` | `str` | No | `"1.0.0"` | Tool version |
 | `toolkit` | `str` | No | `None` | Parent toolkit name |
+| `defer_loading` | `bool` | No | `False` | Exclude from initial list; discoverable via search |
 
 ### ToolParameter
 
@@ -178,15 +185,25 @@ class ToolPlugin(A2EPlugin):
         """Execute tool logic. Returns JSON-serializable dict.
         Raise exception for failure."""
 
+    def _search_tools(
+        self,
+        query: str,
+        filter_tags: list[str] | None = None,
+        tools: list[ToolDefinition] | None = None,
+    ) -> list[ToolDefinition]:
+        \"\"\"On-demand tool discovery. Default: substring match on name/description/tags.
+        Override for BM25, embeddings, or custom search strategies.\"\"\"
+
     def set_event_callback(self, fn: Callable[[ToolEvent], None]):
-        """Register streaming event callback."""
+        \"\"\"Register streaming event callback.\"\"\"
 
     def emit(self, kind: str, data: dict):
-        """Emit streaming event during execution."""
+        \"\"\"Emit streaming event during execution.\"\"\"
 ```
 
 **Handler dispatch:**
-- `ToolListRequest` → calls `_list_tools()`, returns `ToolListResponse`
+- `ToolListRequest` with empty `query` → calls `_list_tools()`, filters out `defer_loading=True`, returns `ToolListResponse`
+- `ToolListRequest` with non-empty `query` → calls `_search_tools(query, filter_tags)` for on-demand discovery, returns `ToolListResponse`
 - `ToolCallRequest` → attaches streaming callback, calls `_execute_tool()`, returns `ToolCallResponse` or `A2EError`
 
 **Execution wrapper:** `_execute()` provides safe execution with:
@@ -201,8 +218,18 @@ from a2e.caps.tools.client import ToolAPI
 
 tools = ToolAPI(client)
 
-# List available tools (results cached in client._tools_cache)
-tool_list = tools.list(kind=None, tags=None)
+# List active (non-deferred) tools — the ~500-token set the model should see
+tool_list = tools.list()
+# Returns List[ToolDefinition], cached in client._tools_cache
+
+# Search all tools by name/description/tags (including deferred)
+search_results = tools.list(query="github", include_deferred=True)
+for t in search_results:
+    print(f"  {t.name}: {t.description}")
+
+# Filter by tags
+network_tools = tools.list(tags=["network"])
+print(f"Network tools: {[t.name for t in network_tools]}")
 
 # Call a tool
 result = tools.call(

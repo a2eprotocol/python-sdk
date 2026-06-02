@@ -40,6 +40,7 @@ from a2e.caps.skills.client import (
     SkillEvent,
     SkillDefinition
 )
+from a2e.caps.tools.client import ToolAPI
 from a2e.caps.tools.protocol import (
     EventKind,
     ToolResult,
@@ -353,6 +354,7 @@ class A2EAgent:
         self._client = A2EClient(transport, agent_id=config.agent_id)
 
         self._memory = MemoryAPI(self._client)
+        self._tools_api = ToolAPI(self._client)
 
         self._skills: list[SkillDefinition] = []
         self._tools: list[ToolDefinition] = []
@@ -368,10 +370,21 @@ class A2EAgent:
         self._memory.init()
 
         self._skills = self._client.discover()
-        self._tools = self._client.tools.list_tools()
+        self._tools = self._tools_api.list()      # active (non-deferred) tools only
 
-        d.status(f"📦 Skills: {[s.name for s in self._skills]}")
-        d.status(f"⚙️  Tools: {[t.name for t in self._tools]}")
+        d.status(f"📦 {len(self._skills)} skills")
+        d.detail(f"📦 Skills: {[s.name for s in self._skills]}")
+
+        # Progressive disclosure for tools:
+        #   STATUS  → count only
+        #   DETAIL  → names
+        #   DEBUG   → full definitions (name, kind, description)
+        d.status(f"⚙️  {len(self._tools)} tools loaded")
+        if d.level >= Disclosure.DETAIL:
+            d.detail(f"⚙️  Tools: {[t.name for t in self._tools]}")
+        if d.level >= Disclosure.DEBUG:
+            for t in self._tools:
+                d.debug(f"  TOOL {t.name} [{getattr(t, 'kind', 'tool')}] — {t.description}")
 
         # Register env push callback
         if self.cfg.observe_env:
@@ -659,7 +672,7 @@ class A2EAgent:
     # ── REPL ──────────────────────────────────────────────────────────────
 
     def run_loop(self):
-        print("A2E Agent ready.  Commands: quit | debug | skills | tools | "
+        print("A2E Agent ready.  Commands: quit | debug | skills | tools | search | "
               "memory | stats | env\n")
         while True:
             try:
@@ -684,7 +697,18 @@ class A2EAgent:
                         print(f"  SKILL {s.name} v{s.version} — {s.description}")
                 case "tools":
                     for t in self._tools:
-                        print(f"  TOOL  {t.name} [{t.kind}] — {t.description}")
+                        print(f"  TOOL  {t.name} [{getattr(t, 'kind', 'tool')}] — {t.description}")
+                case "search":
+                    q = input("  search query: ").strip()
+                    if not q:
+                        print("  (no query)")
+                    else:
+                        results = self._tools_api.list(query=q, include_deferred=True)
+                        if results:
+                            for t in results:
+                                print(f"  TOOL  {t.name} [{getattr(t, 'kind', 'tool')}] — {t.description}")
+                        else:
+                            print(f"  (no tools matching '{q}')")
                 case "memory":
                     entries = self._memory.retrieve(limit=10)
                     for e in entries:
