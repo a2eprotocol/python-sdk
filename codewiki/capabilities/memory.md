@@ -4,7 +4,7 @@ Memory gives agents persistence across turns and sessions. A2E defines three tie
 
 ## Overview
 
-The **memory** capability provides a 3-tier memory system (working, episodic, semantic) with store, retrieve, and forget operations. Agents use memory to persist context across turns, recall relevant information, and maintain knowledge bases.
+The **memory** capability provides a 3-tier memory system (working, episodic, semantic) with init, store, retrieve, and forget operations. Agents initialize a session to obtain a `memory_id`, then use it for all subsequent operations. Memory persists context across turns, recalls relevant information, and maintains knowledge bases.
 
 ## Memory Tiers
 
@@ -14,10 +14,12 @@ The **memory** capability provides a 3-tier memory system (working, episodic, se
 | `episodic` | Per-agent | Across sessions | Conversation history, task episodes |
 | `semantic` | Shared | Across agents | Shared knowledge base, facts |
 
-## Protocol Messages (6 types)
+## Protocol Messages (8 types)
 
 | Type String | Model | Direction |
 |-------------|-------|-----------|
+| `memory/init/req` | `MemoryInitRequest` | Agent → Host |
+| `memory/init/resp` | `MemoryInitResponse` | Host → Agent |
 | `memory/store/req` | `MemoryStoreRequest` | Agent → Host |
 | `memory/store/resp` | `MemoryStoreResponse` | Host → Agent |
 | `memory/retrieve/req` | `MemoryRetrieveRequest` | Agent → Host |
@@ -80,7 +82,11 @@ MemoryForgetResponse(deleted: int)
 ```python
 class MemoryPlugin(A2EPlugin):
     @abstractmethod
-    def on_store(self, entries) -> tuple[list, list]:
+    def on_init(self, namespace: str, scope: dict, metadata: Optional[dict] = None):
+        """Returns (memory_id, backend_object) — allocates a new memory session"""
+
+    @abstractmethod
+    def on_store(self, memory, entries) -> tuple[list, list]:
         """Returns (stored_keys, errors)"""
 
     @abstractmethod
@@ -98,6 +104,10 @@ class MemoryPlugin(A2EPlugin):
 from a2e.caps.memory.client import MemoryAPI
 
 memory = MemoryAPI(client)
+
+# Step 1: INIT — establish a memory session
+resp = memory.init(namespace="my-agent", scope={"agent": "assistant"}, metadata={"version": "1.0"})
+print(f"memory_id: {memory.memory_id}")
 
 # Batch store
 stored, errors = memory.store([
@@ -125,5 +135,6 @@ name = memory.recall("user_name")  # Returns content or None
 
 | Method | Description |
 |--------|-------------|
+| `init(namespace, scope, metadata)` | Initialize a memory session — must be called first |
 | `remember(key, value, tier, tags, ttl, score)` | Single key-value store |
 | `recall(key, default=None)` | Single key retrieval |

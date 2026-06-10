@@ -8,7 +8,7 @@
 | String | `"memory"` |
 | Plugin Type | `MemoryPlugin` |
 | Namespace | `memory/*` |
-| Message Count | 6 |
+| Message Count | 8 |
 
 ## Overview
 
@@ -29,17 +29,48 @@ sequenceDiagram
     participant A as Agent
     participant H as Host (MemoryPlugin)
 
-    A->>H: memory/store/req {entries: [MemoryEntry]}
+    A->>H: memory/init/req {namespace, scope, metadata}
+    H->>A: memory/init/resp {memory_id, namespace}
+
+    A->>H: memory/store/req {memory_id, entries[]}
     H->>A: memory/store/resp {stored: [keys], errors: []}
 
-    A->>H: memory/retrieve/req {keys, query, tags, tier, limit}
+    A->>H: memory/retrieve/req {memory_id, keys, query, tags, tier, limit}
     H->>A: memory/retrieve/resp {entries: [MemoryEntry], total}
 
-    A->>H: memory/forget/req {keys, tags, tier}
+    A->>H: memory/forget/req {memory_id, keys, tags, tier}
     H->>A: memory/forget/resp {deleted: int}
 ```
 
-## Message Types (6)
+## Message Types (8)
+
+### memory/init/req — MemoryInitRequest
+
+Agent → Host. Initialize a memory session. Returns a `memory_id` that must be passed to all subsequent store/retrieve/forget requests.
+
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `type` | `str` | Yes | `"memory/init/req"` | Message type identifier |
+| `id` | `str` | Yes | auto UUID | Message UUID |
+| `version` | `str` | Yes | `"1.0"` | Protocol version |
+| `ts` | `float` | Yes | auto | Unix epoch timestamp |
+| `namespace` | `str` | Yes | — | Logical namespace for the memory session |
+| `scope` | `dict` | Yes | `{}` | Scope metadata (e.g., agent identity, environment) |
+| `metadata` | `dict` | No | `{}` | Additional init parameters |
+
+### memory/init/resp — MemoryInitResponse
+
+Host → Agent. Confirms session creation and returns the `memory_id`.
+
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `type` | `str` | Yes | `"memory/init/resp"` | Message type identifier |
+| `id` | `str` | Yes | auto UUID | Message UUID |
+| `version` | `str` | Yes | `"1.0"` | Protocol version |
+| `ts` | `float` | Yes | auto | Unix epoch timestamp |
+| `req_id` | `str` | Yes | `""` | Echoes request ID |
+| `memory_id` | `str` | Yes | — | Unique session identifier for all subsequent memory operations |
+| `namespace` | `str` | Yes | — | Echoes the requested namespace |
 
 ### memory/store/req — MemoryStoreRequest
 
@@ -51,6 +82,7 @@ Agent → Host. Write one or more memory entries.
 | `id` | `str` | Yes | auto UUID | Message UUID |
 | `version` | `str` | Yes | `"1.0"` | Protocol version |
 | `ts` | `float` | Yes | auto | Unix epoch timestamp |
+| `memory_id` | `str` | Yes | — | Session identifier from init |
 | `entries` | `list[dict]` | Yes | `[]` | List of MemoryEntry dicts |
 
 ### memory/store/resp — MemoryStoreResponse
@@ -77,6 +109,7 @@ Agent → Host. Retrieve memory entries. Supply `keys` for exact lookup, `query`
 | `id` | `str` | Yes | auto UUID | Message UUID |
 | `version` | `str` | Yes | `"1.0"` | Protocol version |
 | `ts` | `float` | Yes | auto | Unix epoch timestamp |
+| `memory_id` | `str` | Yes | — | Session identifier from init |
 | `keys` | `list[dict]` | No | `[]` | Exact key lookup |
 | `query` | `str` | No | `""` | Semantic similarity search query |
 | `tags` | `list[str]` | No | `[]` | Filter by tag |
@@ -108,6 +141,7 @@ Agent → Host. Delete memory entries by key or tag.
 | `id` | `str` | Yes | auto UUID | Message UUID |
 | `version` | `str` | Yes | `"1.0"` | Protocol version |
 | `ts` | `float` | Yes | auto | Unix epoch timestamp |
+| `memory_id` | `str` | Yes | — | Session identifier from init |
 | `keys` | `list[dict]` | No | `[]` | Keys to delete |
 | `tags` | `list[str]` | No | `[]` | Delete all entries matching these tags |
 | `tier` | `str` | No | `"episodic"` | Tier to operate on |
@@ -158,10 +192,20 @@ Host → Agent. Confirms deletion.
 
 ## Wire Examples
 
+### Initialize Memory Session
+
+```json
+{"type":"memory/init/req","id":"m0a","version":"1.0","ts":1716123456.500,"namespace":"agent-session-1","scope":{"agent":"assistant"},"metadata":{"version":"1.0"}}
+```
+
+```json
+{"type":"memory/init/resp","id":"m0b","version":"1.0","ts":1716123456.550,"req_id":"m0a","memory_id":"a1b2c3d4-e5f6-7890-abcd-ef1234567890","namespace":"agent-session-1"}
+```
+
 ### Store Memory
 
 ```json
-{"type":"memory/store/req","id":"m1","version":"1.0","ts":1716123456.789,"entries":[{"key":{"agent":"a1","topic":"prefs"},"content":{"language":"python","style":"concise"},"tier":"episodic","tags":["preferences"],"source":"turn-1","score":0.9,"ttl":0}]}
+{"type":"memory/store/req","id":"m1","version":"1.0","ts":1716123456.789,"memory_id":"a1b2c3d4-e5f6-7890-abcd-ef1234567890","entries":[{"key":{"agent":"a1","topic":"prefs"},"content":{"language":"python","style":"concise"},"tier":"episodic","tags":["preferences"],"source":"turn-1","score":0.9,"ttl":0}]}
 ```
 
 ```json
@@ -171,13 +215,13 @@ Host → Agent. Confirms deletion.
 ### Retrieve by Similarity Search
 
 ```json
-{"type":"memory/retrieve/req","id":"m3","version":"1.0","ts":1716123457.100,"keys":[],"query":"user coding preferences","tags":[],"tier":"","limit":5,"min_score":0.5}
+{"type":"memory/retrieve/req","id":"m3","version":"1.0","ts":1716123457.100,"memory_id":"a1b2c3d4-e5f6-7890-abcd-ef1234567890","keys":[],"query":"user coding preferences","tags":[],"tier":"","limit":5,"min_score":0.5}
 ```
 
 ### Forget by Tag
 
 ```json
-{"type":"memory/forget/req","id":"m4","version":"1.0","ts":1716123458.100,"keys":[],"tags":["temp"],"tier":"working"}
+{"type":"memory/forget/req","id":"m4","version":"1.0","ts":1716123458.100,"memory_id":"a1b2c3d4-e5f6-7890-abcd-ef1234567890","keys":[],"tags":["temp"],"tier":"working"}
 ```
 
 ```json
