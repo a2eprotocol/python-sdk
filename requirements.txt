@@ -1,3 +1,6 @@
+# Requirements are defined in pyproject.toml under [project.dependencies].
+# This file is kept for pip-only workflows.
+# For uv: `uv sync` reads pyproject.toml automatically.
 pydantic==2.12.5
 fastmcp==3.2.0
 mcp==1.27.0

@@ -9,8 +9,14 @@ Think of it as **"POSIX for AI agents"** — a unified interface between intelli
 ## Install
 
 ```bash
+# pip
 pip install a2e
+
+# or uv
+uv pip install a2e
 ```
+
+If installing from source, see [Installation Details](/getting-started/installation).
 
 ## Minimal Server
 

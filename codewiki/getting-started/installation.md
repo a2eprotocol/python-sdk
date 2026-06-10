@@ -1,16 +1,22 @@
 # Installation
 
-The A2E SDK requires Python 3.10+ and a handful of lightweight dependencies — Pydantic v2 for schema validation, FastAPI+Uvicorn for the HTTP transport, and aiofiles for async file I/O. Choose your environment: pip for standard deployments, poetry or uv for locked dependency management, or conda for teams already using it.
+The A2E SDK requires Python 3.10+ and a handful of lightweight dependencies — Pydantic v2 for schema validation, FastAPI+Uvicorn for the HTTP transport. This page covers both pip and uv workflows.
 
 ## Requirements
 
 - **Python 3.10+** (uses `match` statements, `type` union syntax)
-- **pip** package manager
+- **pip** or **[uv](https://docs.astral.sh/uv/)** package manager
 
 ## Install from PyPI
 
+### With pip
 ```bash
 pip install a2e
+```
+
+### With uv
+```bash
+uv pip install a2e
 ```
 
 ## Core Dependencies
@@ -43,6 +49,7 @@ pip install langchain-openai # LangChain integration (deep_agent.py)
 
 ## Install from Source
 
+### With pip
 ```bash
 git clone https://github.com/a2eprotocol/python-sdk.git
 cd python-sdk
@@ -55,6 +62,32 @@ For development:
 pip install -e ".[dev]"
 ```
 
+### With uv (recommended for development)
+
+```bash
+git clone https://github.com/a2eprotocol/python-sdk.git
+cd python-sdk
+uv sync
+```
+
+`uv sync` reads `pyproject.toml` directly and creates a virtual environment with the exact dependency versions. It is the fastest way to get a reproducible development environment.
+
+For development extras:
+
+```bash
+uv sync --dev
+```
+
+### Lockfile
+
+When using uv, a `uv.lock` file can be generated for deterministic installs:
+
+```bash
+uv lock
+```
+
+This produces a cross-platform lockfile that pins every transitive dependency. Commit it to version control for reproducible builds.
+
 ## Verify Installation
 
 ```bash
@@ -66,7 +99,7 @@ python -c "from a2e.schema import A2EHostConfig; print('OK')"
 
 | Issue | Solution |
 |-------|----------|
-| `ModuleNotFoundError: No module named 'a2e'` | Run `pip install -e .` from repo root |
+| `ModuleNotFoundError: No module named 'a2e'` | Run `pip install -e .` or `uv sync` from repo root |
 | `pydantic.ValidationError` on import | Ensure pydantic v2: `pip install pydantic>=2.0` |
 | Port 8765 already in use | Change `server.port` in your config YAML |
 | `ImportError: fastmcp` | Run `pip install fastmcp mcp` |

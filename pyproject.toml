@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "a2e-python-sdk"
+version = "0.1"
+description = "Agent-to-Environment Protocol - Python SDK"
+requires-python = ">=3.10"
+readme = "README.md"
+license = { text = "MIT" }
+authors = [
+    { name = "Cynepia Technologies" },
+]
+
+dependencies = [
+    "pydantic==2.12.5",
+    "fastmcp==3.2.0",
+    "mcp==1.27.0",
+    "fastapi==0.135.3",
+    "uvicorn",
+    "pyyaml",
+]
+
+[project.optional-dependencies]
+dev = [
+    "setuptools",
+]
+
+[tool.setuptools.packages.find]
+include = ["a2e", "a2e.*"]
+
+[tool.setuptools.package-data]
+a2e = ["*.yaml", "*.yml"]
+
+# ── uv tool configuration ──────────────────────────────────────
+[tool.uv]
+
+[dependency-groups]
+dev = [
+    "setuptools",
+]

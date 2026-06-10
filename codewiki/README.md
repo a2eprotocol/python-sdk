@@ -110,8 +110,14 @@ A2E is organized into three clean layers:
 ### Install
 
 ```bash
+# pip
 pip install a2e
+
+# or uv
+uv pip install a2e
 ```
+
+For development setup (`uv sync`, `.venv`, lockfile), see [Installation Details](/getting-started/installation).
 
 ### Minimal Server
 
