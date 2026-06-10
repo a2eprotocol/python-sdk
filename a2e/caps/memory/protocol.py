@@ -63,6 +63,7 @@ class MemoryInitRequest(A2EMessage):
 
 class MemoryInitResponse(A2EMessage):
     type: MessageType = MessageType.MEMORY_INIT_RESP
+    req_id: str = ""
     memory_id: str
     namespace: str
     success: bool = True

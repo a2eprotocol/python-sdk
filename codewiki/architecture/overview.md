@@ -6,7 +6,7 @@ The A2E architecture is organized into three clean layers — Protocol, Runtime,
 
 The full architecture diagram below shows how the Agent connects through the protocol and runtime layers to the 10 capability plugins:
 
-<iframe src="/docs/a2e-architecture.html" width="100%" height="850" frameborder="0" allowfullscreen style="border: 1px solid #1e293b; border-radius: 8px; margin: 16px 0; background: #020617;"></iframe>
+<iframe src="/docs/a2e-architecture.html" width="100%" height="650" frameborder="0" allowfullscreen style="border: 1px solid #1e293b; border-radius: 8px; margin: 16px 0; background: #020617;"></iframe>
 
 For a quick reference, here is the message flow as a simplified graph:
 

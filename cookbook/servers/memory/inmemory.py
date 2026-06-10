@@ -197,7 +197,7 @@ class InMemoryPlugin(MemoryPlugin):
         return self.episodic
 
     # -----------------------------
-    def on_store(self, entries: List[MemoryEntry]):
+    def on_store(self, memory, entries: List[MemoryEntry]):
         stored, errors = [], []
         for e in entries:
             try:
@@ -222,7 +222,7 @@ class InMemoryPlugin(MemoryPlugin):
         return stored, errors
 
     # -----------------------------
-    def on_retrieve(self, req) -> List[MemoryEntry]:
+    def on_retrieve(self, memory, req) -> List[MemoryEntry]:
         results = []
 
         stores = []
@@ -241,7 +241,7 @@ class InMemoryPlugin(MemoryPlugin):
         return results[: req.limit]
 
     # -----------------------------
-    def on_forget(self, req):
+    def on_forget(self, memory, req):
         deleted = 0
 
         stores = []

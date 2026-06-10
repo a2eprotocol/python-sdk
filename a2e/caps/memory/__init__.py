@@ -1,5 +1,7 @@
 from a2e.caps.memory.protocol import (
     MEMORY_TYPE_MAP,
+    MemoryInitRequest,
+    MemoryInitResponse,
     MemoryStoreRequest,
     MemoryStoreResponse,
     MemoryRetrieveRequest,
@@ -17,6 +19,8 @@ __all__ = [
     "MemoryPlugin",
     "MemoryTier",
     "MemoryEntry",
+    "MemoryInitRequest",
+    "MemoryInitResponse",
     "MemoryStoreRequest",
     "MemoryStoreResponse",
     "MemoryRetrieveRequest",

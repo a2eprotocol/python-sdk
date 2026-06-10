@@ -88,6 +88,7 @@ uv lock
 
 This produces a cross-platform lockfile that pins every transitive dependency. Commit it to version control for reproducible builds.
 
+
 ## Verify Installation
 
 ```bash

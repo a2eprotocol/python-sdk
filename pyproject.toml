@@ -20,6 +20,7 @@ dependencies = [
     "fastapi==0.135.3",
     "uvicorn",
     "pyyaml",
+    "requests",
 ]
 
 [project.optional-dependencies]

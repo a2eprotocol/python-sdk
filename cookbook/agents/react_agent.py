@@ -199,7 +199,6 @@ class A2EReActAgent:
             # =============================================
             # Recall Memories
             # =============================================
-
             memories = await asyncio.to_thread(
                 self.rt_client.memory.retrieve,
                 query=goal,
@@ -615,7 +614,7 @@ async def main():
     )
 
     await rt_client.start()
-
+    
     agent = A2EReActAgent(rt_client)
 
     trajectory = await agent.run(
