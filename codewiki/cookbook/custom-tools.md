@@ -4,38 +4,32 @@
 
 Tools are the most fundamental capability in A2E — primitive, stateless operations like file I/O, HTTP requests, and code execution. This cookbook shows how to:
 
-1. **Plugin side**: Write a custom `ToolPlugin` with manifest definition and execution logic, including streaming events
-2. **Client side**: List tools, call tools, handle streaming events, and process results
+1. **Plugin side**: Write a custom `ToolPlugin` (from `a2e.caps.tools.plugin`) with manifest definition and execution logic, including streaming events
+2. **Client side**: List tools, call tools, handle streaming events, and process results using `ToolAPI` (from `a2e.caps.tools.client`)
 
 ## Plugin Side: HTTP Request Tool Plugin
 
-Below is a complete tool plugin that provides an HTTP client (`http_get`, `http_post`):
+Below is a complete tool plugin that provides an HTTP client (`http_get`, `http_post`). It extends the SDK's `ToolPlugin` abstract base, which handles all protocol dispatch (`supported_messages()`, `handle()`, audit, event routing) — you only implement two abstract methods:
 
 ```python
 import json
 import time
 import urllib.request
 import urllib.error
-from typing import Callable
 
-from a2e.core.plugins.interface import A2EPlugin
+from a2e.caps.tools.plugin import ToolPlugin
 from a2e.caps.tools.protocol import (
     ToolDefinition, ToolParameter,
-    ToolListRequest, ToolListResponse,
-    ToolCallRequest, ToolCallResponse,
-    ToolResult, ToolEvent,
+    ToolResult,
 )
 
-class HTTPToolsPlugin(A2EPlugin):
+class HTTPToolsPlugin(ToolPlugin):
     """Provides http_get and http_post as native A2E tools."""
 
     name = "http_tools"
-    type = "tools"
-    priority = 5
 
-    def setup(self, host, config):
-        super().setup(host, config)
-        self._event_callback = None
+    def __init__(self, host_instance, config):
+        super().__init__(host_instance, config)
 
         # Build tool manifests
         self._tools = [
@@ -44,126 +38,51 @@ class HTTPToolsPlugin(A2EPlugin):
                 description="Send an HTTP GET request and return the response body",
                 input_parameters=[
                     ToolParameter(
-                        name="url",
-                        type="string",
-                        description="The URL to request",
-                        required=True,
+                        name="url", type="string",
+                        description="The URL to request", required=True,
                     ),
                     ToolParameter(
-                        name="headers",
-                        type="object",
-                        description="Optional request headers as key-value pairs",
-                        required=False,
+                        name="headers", type="object",
+                        description="Optional request headers as key-value pairs", required=False,
                     ),
                     ToolParameter(
-                        name="timeout",
-                        type="integer",
-                        description="Request timeout in seconds",
-                        required=False,
+                        name="timeout", type="integer",
+                        description="Request timeout in seconds", required=False,
                     ),
                 ],
                 output_parameters=[
-                    ToolParameter(
-                        name="status_code",
-                        type="integer",
-                        description="HTTP status code",
-                    ),
-                    ToolParameter(
-                        name="body",
-                        type="string",
-                        description="Response body",
-                    ),
+                    ToolParameter(name="status_code", type="integer", description="HTTP status code"),
+                    ToolParameter(name="body", type="string", description="Response body"),
                 ],
-                streaming=True,
-                idempotent=True,
-                tags=["http", "network", "read"],
-                version="1.0.0",
-                toolkit=None,
+                streaming=True, idempotent=True,
+                tags=["http", "network", "read"], version="1.0.0",
                 defer_loading=False,
             ),
             ToolDefinition(
                 name="http_post",
                 description="Send an HTTP POST request with a JSON body",
                 input_parameters=[
-                    ToolParameter(
-                        name="url",
-                        type="string",
-                        description="The URL to post to",
-                        required=True,
-                    ),
-                    ToolParameter(
-                        name="body",
-                        type="object",
-                        description="JSON body to send",
-                        required=True,
-                    ),
-                    ToolParameter(
-                        name="headers",
-                        type="object",
-                        description="Optional request headers",
-                        required=False,
-                    ),
-                    ToolParameter(
-                        name="timeout",
-                        type="integer",
-                        description="Request timeout in seconds",
-                        required=False,
-                    ),
+                    ToolParameter(name="url", type="string", description="The URL to post to", required=True),
+                    ToolParameter(name="body", type="object", description="JSON body to send", required=True),
+                    ToolParameter(name="headers", type="object", description="Optional request headers", required=False),
+                    ToolParameter(name="timeout", type="integer", description="Request timeout in seconds", required=False),
                 ],
                 output_parameters=[
-                    ToolParameter(
-                        name="status_code",
-                        type="integer",
-                        description="HTTP status code",
-                    ),
-                    ToolParameter(
-                        name="body",
-                        type="string",
-                        description="Response body",
-                    ),
+                    ToolParameter(name="status_code", type="integer", description="HTTP status code"),
+                    ToolParameter(name="body", type="string", description="Response body"),
                 ],
-                streaming=True,
-                idempotent=False,
-                tags=["http", "network", "write"],
-                version="1.0.0",
-                toolkit=None,
+                streaming=True, idempotent=False,
+                tags=["http", "network", "write"], version="1.0.0",
                 defer_loading=True,  # on-demand discovery; not in the active set
             ),
         ]
 
-    # --- Required: message routing ---
-
-    def supported_messages(self) -> dict[str, type]:
-        return {
-            "tool/list/req":  ToolListRequest,
-            "tool/call/req":  ToolCallRequest,
-        }
-
-    def handle(self, msg):
-        if isinstance(msg, ToolListRequest):
-            return ToolListResponse(tools=self._list_tools())
-        elif isinstance(msg, ToolCallRequest):
-            return self._execute(msg)
-        return None
-
-    # --- Streaming support ---
-
-    def set_event_callback(self, fn: Callable[[ToolEvent], None]):
-        self._event_callback = fn
-
-    def emit(self, kind: str, data: dict, req_id: str = ""):
-        if self._event_callback:
-            event = ToolEvent(kind=kind, data=data, req_id=req_id)
-            self._event_callback(event)
-```
-
-The event callback is wired by `ToolPlugin.handle()` — when a `ToolCallRequest` arrives, a closure wraps the `ToolEvent` with the request's `req_id` and passes it to `self.emit_event()`, which routes through the executor's standard async event path. See [Plugin System → Event Emission](/architecture/plugin-system#event-emission-plugin-client) for the full architecture.
-
-```python
-    # --- ToolPlugin ABC ---
+    # --- Required: Tool manifest ---
 
     def _list_tools(self) -> list[ToolDefinition]:
         return self._tools
+
+    # --- Required: Tool execution ---
 
     def _execute_tool(self, tool_name: str, arguments: dict) -> dict:
         if tool_name == "http_get":
@@ -172,66 +91,31 @@ The event callback is wired by `ToolPlugin.handle()` — when a `ToolCallRequest
             return self._http_post(arguments)
         raise ValueError(f"Unknown tool: {tool_name}")
 
-    def _execute(self, msg: ToolCallRequest) -> ToolCallResponse:
-        """Safe execution wrapper with streaming, error handling, and audit."""
-        t0 = time.time()
-        req_id = msg.id
-
-        try:
-            # Emit progress event
-            self.emit("progress", {"pct": 0, "message": f"Calling {msg.tool_name}..."}, req_id)
-
-            result_data = self._execute_tool(msg.tool_name, msg.arguments)
-            duration_ms = int((time.time() - t0) * 1000)
-
-            self.emit("progress", {"pct": 100, "message": "Complete"}, req_id)
-
-            result = ToolResult(
-                success=True,
-                tool_name=msg.tool_name,
-                data=result_data,
-                summary=f"HTTP {result_data.get('status_code', '?')} response",
-                duration_ms=duration_ms,
-            )
-
-            return ToolCallResponse(data=result)
-
-        except Exception as exc:
-            duration_ms = int((time.time() - t0) * 1000)
-            result = ToolResult(
-                success=False,
-                tool_name=msg.tool_name,
-                error=str(exc),
-                error_code="TOOL_ERROR",
-                duration_ms=duration_ms,
-            )
-            return ToolCallResponse(data=result)
-
     # --- Tool implementations ---
 
     def _http_get(self, args: dict) -> dict:
         url = args["url"]
         headers = args.get("headers", {})
         timeout = args.get("timeout", 30)
-
+        t0 = time.time()
         self.emit("status", {"message": f"GET {url}"}, "")
 
         req = urllib.request.Request(url, headers=headers)
         try:
             with urllib.request.urlopen(req, timeout=timeout) as resp:
                 body = resp.read().decode("utf-8", errors="replace")
-                return {
-                    "status_code": resp.status,
-                    "body": body,
-                    "headers": dict(resp.headers),
-                }
+                return ToolResult(
+                    success=True, tool_name="http_get",
+                    duration_ms=int((time.time() - t0) * 1000),
+                    data={"status_code": resp.status, "body": body, "headers": dict(resp.headers)},
+                ).model_dump()
         except urllib.error.HTTPError as e:
             body = e.read().decode("utf-8", errors="replace") if e.fp else ""
-            return {
-                "status_code": e.code,
-                "body": body,
-                "error": str(e.reason),
-            }
+            return ToolResult(
+                success=True, tool_name="http_get",
+                duration_ms=int((time.time() - t0) * 1000),
+                data={"status_code": e.code, "body": body, "error": str(e.reason)},
+            ).model_dump()
 
     def _http_post(self, args: dict) -> dict:
         url = args["url"]
@@ -239,6 +123,7 @@ The event callback is wired by `ToolPlugin.handle()` — when a `ToolCallRequest
         headers = args.get("headers", {})
         headers.setdefault("Content-Type", "application/json")
         timeout = args.get("timeout", 30)
+        t0 = time.time()
 
         self.emit("status", {"message": f"POST {url}"}, "")
 
@@ -246,18 +131,18 @@ The event callback is wired by `ToolPlugin.handle()` — when a `ToolCallRequest
         try:
             with urllib.request.urlopen(req, timeout=timeout) as resp:
                 resp_body = resp.read().decode("utf-8", errors="replace")
-                return {
-                    "status_code": resp.status,
-                    "body": resp_body,
-                    "headers": dict(resp.headers),
-                }
+                return ToolResult(
+                    success=True, tool_name="http_post",
+                    duration_ms=int((time.time() - t0) * 1000),
+                    data={"status_code": resp.status, "body": resp_body, "headers": dict(resp.headers)},
+                ).model_dump()
         except urllib.error.HTTPError as e:
             resp_body = e.read().decode("utf-8", errors="replace") if e.fp else ""
-            return {
-                "status_code": e.code,
-                "body": resp_body,
-                "error": str(e.reason),
-            }
+            return ToolResult(
+                success=True, tool_name="http_post",
+                duration_ms=int((time.time() - t0) * 1000),
+                data={"status_code": e.code, "body": resp_body, "error": str(e.reason)},
+            ).model_dump()
 
     # --- State persistence ---
 
@@ -465,7 +350,7 @@ client.disconnect()
 | `success` | `bool` | Yes | True if tool executed without error |
 | `tool_name` | `str` | Yes | Name of the tool that ran |
 | `data` | `Any` | No | Result payload (shape depends on tool) |
-| `summary` | `str` | No | Human-readable one-liner |
+| `summary` | `Any` | No | Human-readable one-liner |
 | `truncated` | `bool` | Yes | Output was cut short |
 | `exit_code` | `int` | No | Process exit code (shell tools) |
 | `error` | `str` | No | Error message on failure |

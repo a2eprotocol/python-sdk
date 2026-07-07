@@ -53,100 +53,47 @@ class MyPlugin(A2EPlugin):
         """Record audit entry (best-effort, never crashes)"""
 ```
 
-## Complete Example: Counter Plugin
+## Complete Example: Counter Environment Plugin
+
+The SDK provides capability-specific abstract base plugins. For environments, extend `EnvPlugin` (`a2e.caps.env.plugin`) which handles all message routing, episode lifecycle, and persistence — you only implement the abstract hooks:
 
 ```python
-from a2e.core.plugins.interface import A2EPlugin
+from a2e.caps.env.plugin import EnvPlugin
 from a2e.caps.env.protocol import (
-    EnvResetRequest, EnvResetResponse,
-    EnvStepRequest, EnvStepResponse,
-    EnvObserveRequest, EnvObserveResponse,
-    EnvCloseRequest, EnvCloseResponse,
     EnvAction, EnvObservation, EnvState,
 )
 
-class CounterEnv(A2EPlugin):
+class CounterEnv(EnvPlugin):
     name = "counter_env"
-    type = "env"
-    priority = 0
 
-    def setup(self, host, config):
-        super().setup(host, config)
-        self._count = 0
-        self._episode_id = ""
+    def __init__(self, host_instance, config):
+        super().__init__(host_instance, config)
+        self._target = 10
 
-    def supported_messages(self):
-        return {
-            "env/reset/req": EnvResetRequest,
-            "env/step/req": EnvStepRequest,
-            "env/observe/req": EnvObserveRequest,
-            "env/close/req": EnvCloseRequest,
-        }
+    # --- Required hooks ---
 
-    def handle(self, msg):
-        if isinstance(msg, EnvResetRequest):
-            return self._reset(msg)
-        elif isinstance(msg, EnvStepRequest):
-            return self._step(msg)
-        elif isinstance(msg, EnvObserveRequest):
-            return self._observe(msg)
-        elif isinstance(msg, EnvCloseRequest):
-            return self._close(msg)
-        return None
+    def on_reset(self, seed=None, options=None) -> EnvState:
+        """Called when environment is reset. No episode exists yet here."""
+        self._target = int((options or {}).get("target", 10))
+        return EnvState(count=0, step_num=0)
 
-    def _reset(self, msg):
-        self._count = 0
-        self._episode_id = msg.episode_id or "ep_1"
-        state = EnvState(count=self._count)
-        return EnvResetResponse(
-            episode_id=self._episode_id,
-            observation=EnvObservation(
-                episode_id=self._episode_id,
-                step_num=0,
-                state=state,
-                done=False,
-                reward=0.0
-            )
-        )
-
-    def _step(self, msg):
-        action = msg.action
+    def on_step(self, episode_id: str, action: EnvAction) -> EnvObservation:
+        """Called on each step. Episode exists and is tracked by EnvPlugin."""
+        prev = self._episode.state.model_dump()
+        new_count = int(prev.get("count", 0))
         if action.action_type == "inc":
-            self._count += action.payload.get("amount", 1)
+            new_count += action.payload.get("amount", 1)
         elif action.action_type == "dec":
-            self._count -= action.payload.get("amount", 1)
+            new_count -= action.payload.get("amount", 1)
 
-        reward = 1.0 if self._count > 0 else -1.0
-        done = self._count >= 10
-
-        return EnvStepResponse(
-            observation=EnvObservation(
-                episode_id=self._episode_id,
-                step_num=msg.step_num + 1,
-                state=EnvState(count=self._count),
-                done=done,
-                reward=reward
-            )
+        done = new_count >= self._target
+        return EnvObservation(
+            episode_id=episode_id,
+            step_num=int(prev.get("step_num", 0)) + 1,
+            state=EnvState(count=new_count, step_num=int(prev.get("step_num", 0)) + 1),
+            reward=1.0 if done else 0.0,
+            done=done,
         )
-
-    def _observe(self, msg):
-        return EnvObserveResponse(
-            observation=EnvObservation(
-                episode_id=self._episode_id,
-                state=EnvState(count=self._count),
-                done=self._count >= 10
-            )
-        )
-
-    def _close(self, msg):
-        return EnvCloseResponse()
-
-    def save_state(self, store, key, session_id):
-        store.save(f"{self.name}:{key}", {"count": self._count})
-
-    def restore_state(self, store, key, session_id):
-        state = store.load(f"{self.name}:{key}")
-        self._count = state.get("count", 0)
 ```
 
 ## Registering in Config
@@ -224,25 +171,46 @@ See [Client API → Push Handlers](/sdk-reference/client-api#push-handlers) for 
 ## Testing Your Plugin
 
 ```python
-from a2e.core.server.server import A2EServer
-from a2e.core.client.client import A2EClient
+import logging
 from a2e.core.transports.direct import DirectTransport
+from a2e.core.client.client import A2EClient
+from a2e.core.server.executor import A2EServerRuntimeExecutor
 from a2e.schema import A2EHostConfig
+from a2e.core.plugins import PluginConfig
+from a2e.core.transports import TransportConfig
+from a2e.caps.env.client import EnvAPI
 
+logger = logging.getLogger("test")
+
+# Create a wired DirectTransport pair
+host_t = DirectTransport(logger=logger)
+client_t = DirectTransport(logger=logger)
+host_t.connect(client_t)
+client_t.connect(host_t)
+
+# Build host config with the counter plugin
 config = A2EHostConfig(
     host_id="test",
+    server={"host": "0.0.0.0", "port": 0},
+    transport={"type": "direct", "config": {}},
+    audit={"enabled": False},
     plugins=[PluginConfig(name="counter", type="env", cls="my_package.counter.CounterEnv")],
-    transport=TransportConfig(type="direct")
 )
 
-server = A2EServer(config)
-transport = server.start()  # DirectTransport
+# Start the host executor on one side
+executor = A2EServerRuntimeExecutor(config, host_t, logger)
+executor.start()
 
-client = A2EClient(transport, logger, agent_caps=["env"])
+# Connect the agent client on the other side
+client = A2EClient(client_t, logger, agent_id="test-agent", agent_caps=["env"])
 client.connect()
 
+# Use the capability API
 env = EnvAPI(client)
-resp = env.reset(env_name="counter_env")
+resp = env.reset(env_name="counter_env", seed=42)
+print(f"Episode started: {resp.episode_id}")
+
 # ... test steps ...
 client.disconnect()
+executor.stop()
 ```

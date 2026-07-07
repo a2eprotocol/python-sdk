@@ -1,0 +1,33 @@
+host_id: "planning-cookbook"
+
+transport:
+  type: http
+  config:
+    base_url: "http://localhost:8766"
+    send_path: "/send"
+    stream_path: "/stream"
+
+server:
+  host: "0.0.0.0"
+  port: 8766
+
+auth_token: null
+
+audit:
+  enabled: false
+  path: "/tmp/a2e/cookbook/planning-audit.log"
+
+snapshot_store:
+  type: file
+  config:
+    root: "/tmp/a2e/cookbook/planning"
+
+plugins:
+  - name: planning
+    type: planning
+    cls: a2e.caps.planning.plugin.HermesPlanningPlugin
+    metadata:
+      enabled: true
+      priority: 0
+      exclusive: false
+      ROOT: "/tmp/a2e/cookbook/planning"

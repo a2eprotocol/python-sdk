@@ -54,10 +54,19 @@ The runtime orchestrates message flow. The `A2EServer` accepts connections (HTTP
 
 All capability logic lives in plugins. Each namespace follows the same 3-file pattern:
 - `protocol.py` — Pydantic message models + `TYPE_MAP`
-- `plugin.py` — `A2EPlugin` subclass with abstract hooks
-- `client.py` — High-level `*API` class wrapping `A2EClient`
+- `plugin.py` — `A2EPlugin` subclass (often a capability-specific ABC like `ToolPlugin`, `MemoryPlugin`, `EnvPlugin`, `SkillPlugin`, `ToolkitPlugin`) with abstract hooks
+- `client.py` — High-level `*API` class wrapping `A2EClient`, calls `client.update_msg_types(TYPE_MAP)` in its constructor
 
 **Key directories**: `a2e/caps/tools/`, `a2e/caps/memory/`, `a2e/caps/env/`, `a2e/caps/proc/`, `a2e/caps/learn/`, `a2e/caps/skills/`, `a2e/caps/toolkits/`, `a2e/caps/chains/`, `a2e/caps/mcp/`
+
+Each capability plugin has its own abstract base in `caps/<name>/plugin.py`:
+- `ToolPlugin` → `_list_tools()`, `_execute_tool()`, optional `_search_tools()`
+- `EnvPlugin` → `on_reset()`, `on_step()`, `on_close()`
+- `MemoryPlugin` → `on_init()`, `on_store()`, `on_retrieve()`, `on_forget()`
+- `SkillPlugin` → `_list_skills()`, `_execute_skill()`
+- `ToolkitPlugin` → `_list_toolkits()`, `_configure_toolkit()`
+
+When writing a plugin, **extend the capability-specific ABC** from `a2e.caps.<name>.plugin` — it handles protocol dispatch, audit logging, and event routing. Only extend `A2EPlugin` directly for capabilities without a dedicated ABC (e.g. subagents, proc).
 
 ## Key Design Patterns
 

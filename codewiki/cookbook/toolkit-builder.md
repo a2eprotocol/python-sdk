@@ -16,30 +16,28 @@ import json
 import psycopg2
 import psycopg2.extras
 
-from a2e.core.plugins.interface import A2EPlugin
+from a2e.caps.toolkits.plugin import ToolkitPlugin
 from a2e.caps.toolkits.protocol import (
     ToolkitDefinition,
-    ToolkitListRequest, ToolkitListResponse,
-    ToolkitConfigureRequest, ToolkitConfigureResponse,
+    ToolkitListResponse,
+    ToolkitConfigureResponse,
 )
 from a2e.caps.tools.protocol import (
     ToolDefinition, ToolParameter,
-    ToolListRequest, ToolListResponse,
-    ToolCallRequest, ToolCallResponse,
+    ToolListResponse, ToolCallResponse,
     ToolResult,
 )
 
-class DatabaseToolkitPlugin(A2EPlugin):
-    """PostgreSQL database toolkit with configurable connection."""
+class DatabaseToolkitPlugin(ToolkitPlugin):
+    """PostgreSQL database toolkit — handles config + discovery only."""
 
     name = "db_toolkit"
-    type = "toolkits"
-    priority = 5
 
-    def setup(self, host, config):
-        super().setup(host, config)
-        self._connections = {}  # session_id -> psycopg2 connection
-        self._configured = {}   # toolkit_name -> bool
+    def __init__(self, host_instance, config):
+        super().__init__(host_instance, config)
+        self._connections = {}
+        self._configured = {}
+        self._db_config = {}
 
         # Define the toolkit
         self._toolkits = {
@@ -165,31 +163,8 @@ class DatabaseToolkitPlugin(A2EPlugin):
             ),
         ]
 
-    # --- Message routing ---
-
-    def supported_messages(self) -> dict[str, type]:
-        return {
-            "toolkit/list/req":      ToolkitListRequest,
-            "toolkit/configure/req": ToolkitConfigureRequest,
-            "tool/list/req":         ToolListRequest,
-            "tool/call/req":         ToolCallRequest,
-        }
-
-    def handle(self, msg):
-        if isinstance(msg, ToolkitListRequest):
-            return self._list_toolkits(msg)
-        elif isinstance(msg, ToolkitConfigureRequest):
-            return self._configure_toolkit(msg)
-        elif isinstance(msg, ToolListRequest):
-            # Only return tools if toolkit is configured
-            if self._configured.get("postgres"):
-                return ToolListResponse(tools=self._tool_defs)
-            return ToolListResponse(tools=[])
-        elif isinstance(msg, ToolCallRequest):
-            return self._execute_tool(msg)
-        return None
-
-    # --- ToolkitPlugin ABC ---
+    # --- ToolkitPlugin abstract hooks ---
+    # (supported_messages() and handle() are provided by the base class)
 
     def _list_toolkits(self, msg) -> ToolkitListResponse:
         """Return toolkit definitions with current configured status."""
@@ -272,95 +247,6 @@ class DatabaseToolkitPlugin(A2EPlugin):
                 message=f"Connection failed: {exc}",
             )
 
-    # --- Tool execution ---
-
-    def _execute_tool(self, msg: ToolCallRequest) -> ToolCallResponse:
-        conn = self._connections.get(msg.session_id)
-        if not conn:
-            result = ToolResult(
-                success=False,
-                tool_name=msg.tool_name,
-                error="Database not configured — call toolkit/configure first",
-                error_code="TOOL_ERROR",
-                duration_ms=0,
-            )
-            return ToolCallResponse(data=result)
-
-        import time
-        t0 = time.time()
-
-        try:
-            if msg.tool_name == "db_query":
-                data = self._db_query(conn, msg.arguments)
-            elif msg.tool_name == "db_execute":
-                data = self._db_execute(conn, msg.arguments)
-            elif msg.tool_name == "db_list_tables":
-                data = self._db_list_tables(conn)
-            elif msg.tool_name == "db_describe_table":
-                data = self._db_describe_table(conn, msg.arguments)
-            else:
-                raise ValueError(f"Unknown tool: {msg.tool_name}")
-
-            duration_ms = int((time.time() - t0) * 1000)
-            result = ToolResult(
-                success=True,
-                tool_name=msg.tool_name,
-                data=data,
-                duration_ms=duration_ms,
-            )
-            return ToolCallResponse(data=result)
-
-        except Exception as exc:
-            duration_ms = int((time.time() - t0) * 1000)
-            result = ToolResult(
-                success=False,
-                tool_name=msg.tool_name,
-                error=str(exc),
-                error_code="TOOL_ERROR",
-                duration_ms=duration_ms,
-            )
-            return ToolCallResponse(data=result)
-
-    def _db_query(self, conn, args):
-        sql = args["sql"]
-        params = args.get("params")
-        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
-            cur.execute(sql, params)
-            rows = cur.fetchmany(self._max_rows)
-            return {
-                "rows": [dict(r) for r in rows],
-                "row_count": len(rows),
-                "truncated": cur.rowcount > self._max_rows,
-            }
-
-    def _db_execute(self, conn, args):
-        sql = args["sql"]
-        params = args.get("params")
-        with conn.cursor() as cur:
-            cur.execute(sql, params)
-            return {"affected": cur.rowcount}
-
-    def _db_list_tables(self, conn):
-        with conn.cursor() as cur:
-            cur.execute("""
-                SELECT table_name
-                FROM information_schema.tables
-                WHERE table_schema = 'public'
-                ORDER BY table_name
-            """)
-            return {"tables": [r[0] for r in cur.fetchall()]}
-
-    def _db_describe_table(self, conn, args):
-        table = args["table_name"]
-        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
-            cur.execute("""
-                SELECT column_name, data_type, is_nullable, column_default
-                FROM information_schema.columns
-                WHERE table_name = %s AND table_schema = 'public'
-                ORDER BY ordinal_position
-            """, (table,))
-            return {"columns": [dict(r) for r in cur.fetchall()]}
-
     # --- Lifecycle ---
 
     def teardown(self):
@@ -399,6 +285,13 @@ plugins:
   - name: db_toolkit
     type: toolkits
     cls: my_package.db_toolkit.DatabaseToolkitPlugin
+    metadata:
+      enabled: true
+      priority: 5
+
+  - name: db_tools
+    type: tools
+    cls: my_package.db_toolkit.DatabaseToolsPlugin
     metadata:
       enabled: true
       priority: 5

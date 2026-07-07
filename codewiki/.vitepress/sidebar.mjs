@@ -41,7 +41,8 @@ export default [
       { text: "Toolkits", link: "/capabilities/toolkits" },
       { text: "Chains", link: "/capabilities/chains" },
       { text: "MCP Bridge", link: "/capabilities/mcp" },
-      { text: "Subagents", link: "/capabilities/subagents" }
+      { text: "Subagents", link: "/capabilities/subagents" },
+      { text: "Planning", link: "/capabilities/planning" }
     ]
   },
   {
@@ -52,7 +53,8 @@ export default [
       { text: "Handshake", link: "/protocol-spec/handshake" },
       { text: "Capability Negotiation", link: "/protocol-spec/capability-negotiation" },
       { text: "Message Types", link: "/protocol-spec/message-types" },
-      { text: "Error Codes", link: "/protocol-spec/error-codes" }
+      { text: "Error Codes", link: "/protocol-spec/error-codes" },
+      { text: "Planning", link: "/protocol-spec/planning" }
     ]
   },
   {
@@ -67,7 +69,8 @@ export default [
       { text: "Memory (Plugin & Client)", link: "/cookbook/memory-plugin" },
       { text: "Custom Tools (Plugin & Client)", link: "/cookbook/custom-tools" },
       { text: "Toolkit Builder (Plugin & Client)", link: "/cookbook/toolkit-builder" },
-      { text: "Subagent Orchestrator (Plugin & Client)", link: "/cookbook/subagent-orchestrator" }
+      { text: "Subagent Orchestrator (Plugin & Client)", link: "/cookbook/subagent-orchestrator" },
+      { text: "Planning (Plugin & Client)", link: "/cookbook/planning-plugin" }
     ]
   },
   {
