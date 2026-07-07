@@ -86,6 +86,7 @@ class A2ECapability(str, Enum):
     LEARNING = "learning"       # learn/* subsystem
     CHAINS = "chains"         # chain/* pipelines
     MULTI_AGENT = "multi_agent"    # peer agent coordination (future)
+    PLANNING = "planning"      # generic planning / task-tracking (kanban = a view)
     MCP = "mcp"            # mcp/* bridge namespace
     TEST = "test"           # generic test capability
 

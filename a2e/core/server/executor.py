@@ -167,6 +167,15 @@ class A2EServerRuntimeExecutor:
         cls = getattr(module, cls_name)
         return cls(self, config)
 
+    # ── plugin resolution bridges (used by cross-capability plugins, e.g. chains) ──
+    def get_plugin(self, name: str):
+        """Return a loaded plugin by capability name (e.g. "tools", "proc")."""
+        return self.plugins.get(name)
+
+    def send(self, msg: BaseModel):
+        """Public send used by plugins to emit push events (ChainEvent, …)."""
+        self._send(msg)
+
     def _build_registry(self):
         self.type_to_plugins.clear()
 

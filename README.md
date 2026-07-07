@@ -36,7 +36,7 @@ A2E defines three things:
 
 1. **A message protocol** — NDJSON-based, typed, versioned, with request/response/event patterns
 2. **A pluggable runtime host** — a thin execution kernel that loads, routes, and manages plugins
-3. **10 standard capability namespaces** — tools, memory, env, proc, learn, skills, toolkits, chains, mcp, subagents
+3. **11 standard capability namespaces** — tools, memory, env, proc, learn, skills, toolkits, chains, mcp, subagents, planning
 
 Agents interact with environments via structured messages:
 
@@ -292,6 +292,7 @@ Full documentation is available at [a2eprotocol.github.io/docs](https://a2eproto
 - [Chains](codewiki/capabilities/chains.md) — DAG pipelines with branching and fan-out
 - [MCP Bridge](codewiki/capabilities/mcp.md) — Model Context Protocol integration
 - [Subagents](codewiki/capabilities/subagents.md) — Multi-agent orchestration: spawn, delegate, merge
+- [Planning](codewiki/capabilities/planning.md) — Plans, tasks, kanban board, configurable columns
 
 ### Protocol Specification
 - [Message Format](codewiki/protocol-spec/message-format.md) — NDJSON, A2EMessage fields
@@ -299,6 +300,7 @@ Full documentation is available at [a2eprotocol.github.io/docs](https://a2eproto
 - [Capability Negotiation](codewiki/protocol-spec/capability-negotiation.md) — How capabilities are matched
 - [Message Types](codewiki/protocol-spec/message-types.md) — Full type registry reference
 - [Error Codes](codewiki/protocol-spec/error-codes.md) — All error codes and retry strategies
+- [Planning](codewiki/protocol-spec/planning.md) — Planning capability protocol specification
 
 ### Cookbook
 - [Writing a Plugin](codewiki/cookbook/writing-a-plugin.md) — Step-by-step plugin development
@@ -310,6 +312,7 @@ Full documentation is available at [a2eprotocol.github.io/docs](https://a2eproto
 - [Custom Tools (Plugin & Client)](codewiki/cookbook/custom-tools.md) — HTTP tools plugin with streaming
 - [Toolkit Builder (Plugin & Client)](codewiki/cookbook/toolkit-builder.md) — Database toolkit with schema config
 - [Subagent Orchestrator (Plugin & Client)](codewiki/cookbook/subagent-orchestrator.md) — Multi-agent orchestration with depth control
+- [Planning (Plugin & Client)](codewiki/cookbook/planning-plugin.md) — Plans, tasks, and kanban board views
 
 ### Resources
 - [Glossary](codewiki/resources/glossary.md) — A-Z reference of A2E terms and concepts

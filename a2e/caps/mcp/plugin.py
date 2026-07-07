@@ -109,6 +109,8 @@ class MCPPlugin(A2EPlugin):
         finally:
             self.audit_handle(msg, response, req_id, t0)
 
+        return response
+
     # ---------------------------------------------------------
     # Server Management
     # ---------------------------------------------------------
