@@ -64,6 +64,10 @@ class MessageType(str, Enum):
     ENV_BATCH_STEP_REQ = "env/batch_step/req"
     ENV_BATCH_STEP_RESP = "env/batch_step/resp"
 
+    # experience-list (host extension; wire-compatible with xa-agent-env)
+    ENV_EXP_LIST_REQ = "env/exp/list/req"
+    ENV_EXP_LIST_RESP = "env/exp/list/resp"
+
 
 class EnvErrorCode(str, Enum):
     RUNTIME_ERROR = "runtime_error"
@@ -314,6 +318,20 @@ class EnvBatchStepResponse(A2EMessage):
     results: List[EnvStepResponse]
 
 
+class EnvExpListRequest(A2EMessage):
+    """Agent → Host: pull recorded (state, action, reward, ...) transitions."""
+    type: str = "env/exp/list/req"
+    episode_id: str = ""
+    limit: int = 100
+
+
+class EnvExpListResponse(A2EMessage):
+    """Host → Agent: recorded experiences for an episode (or all)."""
+    type: str = "env/exp/list/resp"
+    req_id: str = ""
+    episodes: List[dict] = []
+
+
 # ---------------------------------------------------------------------------
 # TYPE REGISTRY (plug into your decoder)
 # ---------------------------------------------------------------------------
@@ -349,6 +367,10 @@ ENV_TYPE_MAP = {
     # batch
     MessageType.ENV_BATCH_STEP_REQ: EnvBatchStepRequest,
     MessageType.ENV_BATCH_STEP_RESP: EnvBatchStepResponse,
+
+    # experience list (host extension; wire-compatible)
+    MessageType.ENV_EXP_LIST_REQ: EnvExpListRequest,
+    MessageType.ENV_EXP_LIST_RESP: EnvExpListResponse,
 
     # state push
     MessageType.ENV_STATE_PUSH: EnvStatePush
