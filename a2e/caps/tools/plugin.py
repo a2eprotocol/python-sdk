@@ -9,6 +9,7 @@ from typing import Any, Dict, Callable, Optional, Type, List
 from a2e.caps.tools.protocol import (
     ToolCallRequest,
     ToolCallResponse,
+    ToolResult,
     ToolEvent,
     ToolListRequest,
     ToolListResponse,
@@ -144,9 +145,29 @@ class ToolPlugin(A2EPlugin):
         t0 = time.monotonic()
         try:
             result = self._execute_tool(msg.tool_name, msg.arguments or {})
+            # The host plugin returns a plain JSON-serializable dict (per the
+            # _execute_tool contract), but ToolCallResponse.data is typed as a
+            # ToolResult. Coerce the raw payload into a ToolResult so the
+            # response validates — otherwise pydantic raises a ValidationError
+            # at construction time (outside this try/except) and the agent
+            # receives a null/empty response. See bug: terminal tool returned
+            # null consistently.
+            if isinstance(result, ToolResult):
+                tool_result = result
+            else:
+                payload = result if isinstance(result, dict) else {"value": result}
+                tool_result = ToolResult(
+                    success=True,
+                    tool_name=msg.tool_name,
+                    data=payload,
+                    exit_code=payload.get("exit_code")
+                    if isinstance(payload, dict)
+                    else None,
+                    duration_ms=int((time.monotonic() - t0) * 1000),
+                )
             response = ToolCallResponse(
                 req_id=req_id,
-                data=result,
+                data=tool_result,
                 created_at=time.time(),
             )
         except Exception as e:
