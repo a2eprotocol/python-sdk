@@ -464,12 +464,14 @@ class A2EReActAgent:
             )
 
             # =============================================
-            # Adapt Policy / Routing
+            # Refinement Policy (replaces learn.adapt)
+            # Plan → Review → Apply with rollback safety
             # =============================================
             if step_idx > 0 and step_idx % 5 == 0:
-
                 await asyncio.to_thread(
-                    self.rt_client.learn.adapt
+                    self._refine,
+                    episode_id=episode_id,
+                    step_idx=step_idx,
                 )
 
             # =============================================
@@ -600,10 +602,69 @@ class A2EReActAgent:
 
         return reward
 
+    # -----------------------------------------------------
+    # Refinement Policy (replaces learn.adapt)
+    # -----------------------------------------------------
 
-# =========================================================
-# Example Usage
-# =========================================================
+    def _refine(self, episode_id: str, step_idx: int):
+        """
+        Plan → Review → Apply refinement cycle using the unified
+        refine() interface.
+
+        Replaces the old learn.adapt() call with a full
+        refinement workflow modeled after prime-agent:
+          1. Plan: generate proposals from feedback
+          2. Review: auto-gate proposals (confidence, conflicts)
+          3. Apply: atomically apply approved proposals
+          4. Rollback: available if applied edits fail
+        """
+        learn = self.rt_client.learn
+        cn = "react-agent"
+
+        # 1. Plan
+        plan = learn.refine(
+            component_name=cn, action="plan", scope="local",
+        )
+
+        if not plan.get("proposals"):
+            return
+
+        # 2. Review each proposal
+        for proposal in plan["proposals"]:
+            review = learn.refine(
+                component_name=cn, action="review", proposal=proposal,
+            )
+
+            if not review.get("approved"):
+                continue
+
+            # 3. Apply approved proposal
+            result = learn.refine(
+                component_name=cn, action="apply", proposal=proposal,
+            )
+
+            if result.get("applied_edits", 0) > 0:
+                print(
+                    f"[refine] step={step_idx} "
+                    f"applied={result['applied_edits']} "
+                    f"plan={plan['plan_id']}"
+                )
+            elif result.get("failed_edits", 0) > 0:
+                # 4. Rollback on failure
+                rid = result.get("refinement_id", "")
+                if rid and result.get("rollback_available"):
+                    learn.refine(
+                        component_name=cn, action="rollback",
+                        refinement_id=rid,
+                    )
+                    print(
+                        f"[refine] step={step_idx} "
+                        f"rolled back {rid}"
+                    )
+
+    # =========================================================
+    # Example Usage
+    # =========================================================
 
 async def main():
 

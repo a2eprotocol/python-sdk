@@ -249,7 +249,7 @@ class A2EDeepAgent:
         for s in self.rt_client.skills.list():
 
             def make_skill(
-                skill_name,
+                component_name,
                 skill_description,
             ):
 
@@ -262,14 +262,14 @@ class A2EDeepAgent:
                     result = (
                         await asyncio.to_thread(
                             self.rt_client.skills.call,
-                            skill_name,
+                            component_name,
                             kwargs,
                         )
                     )
 
                     return str(result.output)
 
-                runtime_skill.name = skill_name
+                runtime_skill.name = component_name
 
                 runtime_skill.description = (
                     skill_description

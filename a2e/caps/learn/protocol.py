@@ -26,6 +26,16 @@ class MessageType(str, Enum):
     LEARN_ADAPT_RESP = "learn/adapt/resp"
     LEARN_STATS_REQ = "learn/stats/req"
     LEARN_STATS_RESP = "learn/stats/resp"
+    LEARN_REFINEMENT_PLAN_REQ = "learn/refinement/plan/req"
+    LEARN_REFINEMENT_PLAN_RESP = "learn/refinement/plan/resp"
+    LEARN_REFINEMENT_APPLY_REQ = "learn/refinement/apply/req"
+    LEARN_REFINEMENT_APPLY_RESP = "learn/refinement/apply/resp"
+    LEARN_REFINEMENT_ROLLBACK_REQ = "learn/refinement/rollback/req"
+    LEARN_REFINEMENT_ROLLBACK_RESP = "learn/refinement/rollback/resp"
+    LEARN_REFINEMENT_REVIEW_REQ = "learn/refinement/review/req"
+    LEARN_REFINEMENT_REVIEW_RESP = "learn/refinement/review/resp"
+    LEARN_REFINEMENT_HISTORY_REQ = "learn/refinement/history/req"
+    LEARN_REFINEMENT_HISTORY_RESP = "learn/refinement/history/resp"
 
 
 class FeedbackPolarity(str, Enum):
@@ -48,6 +58,16 @@ class FeedbackSource(str, Enum):
     HUMAN = "human"
     ENV = "env"       # environment signal (test pass/fail, tool error, etc.)
     SELF = "self"      # model self-critique
+
+
+class AdaptStrategy(str, Enum):
+    """Adaptation strategy for component routing optimization."""
+
+    PPO = "ppo"              # Proximal Policy Optimization — policy gradient with clipping
+    UCB1 = "ucb1"            # Upper Confidence Bound — explore/exploit based on confidence intervals
+    EPSILON_GREEDY = "epsilon_greedy"  # Random exploration with epsilon probability
+    SOFTMAX = "softmax"      # Boltzmann exploration over value estimates
+    CUSTOM = "custom"        # User-defined strategy
 
 
 # ── The turn that was rated ──────────────────────────────────────────────────
@@ -113,7 +133,7 @@ class Feedback(BaseModel):
             "confidence": self.confidence,
             # Environment context — useful for slicing DPO data by skill/agent
             # "agent": env.agent_name,
-            # "skills_used": env.skill_names,
+            # "skills_used": env.component_names,
             # "had_failures": env.had_failures,
         }
 
@@ -132,7 +152,7 @@ class Feedback(BaseModel):
             "source": self.source.value,
             # Environment context — reward model can condition on these
             # "agent": env.agent_name,
-            # "skills_used": env.skill_names,
+            # "skills_used": env.component_names,
             # "had_failures": env.had_failures,
             # "deployment": env.deployment,
         }
@@ -156,7 +176,7 @@ class Experience(BaseModel):
     A (state, action, reward, next_state, done) tuple for RL-style replay.
 
     `state`      — serialised agent context before the action
-    `action`     — { skill_name / tool_name, input }
+    `action`     — { component_name / tool_name, input }
     `reward`     — scalar reward from the environment
     `next_state` — serialised agent context after the action
     `done`       — whether the episode ended
@@ -184,12 +204,12 @@ class LearnExperienceResponse(A2EMessage):
     stored: int = 0
 
 
-class SkillPerformanceRecord(BaseModel):
+class ComponentPerformanceRecord(BaseModel):
     """
     Rolling performance stats tracked per skill, used for adaptive routing.
     The host maintains this; agents can query or reset it.
     """
-    skill_name: str
+    component_name: str
     calls_total: int = 0
     calls_success: int = 0
     calls_failed: int = 0
@@ -201,36 +221,107 @@ class SkillPerformanceRecord(BaseModel):
 
 class LearnAdaptRequest(A2EMessage):
     """
-    Agent → Host.  Ask the host to update skill routing weights based on
+    Agent → Host.  Ask the host to update routing weights based on
     accumulated feedback and experiences.
 
-    `skill_name`  — empty = adapt all skills
-    `strategy`    — "ucb1" | "epsilon_greedy" | "softmax" | "custom"
+    `component_name`  — empty = adapt all components (skills, tools, subagents)
+    `strategy`        — adaptation strategy (default: PPO)
     """
     type: MessageType = MessageType.LEARN_ADAPT_REQ
-    skill_name: str = ""
-    strategy: str = "ucb1"
+    component_name: str = ""
+    strategy: AdaptStrategy = AdaptStrategy.PPO
 
 
 class LearnAdaptResponse(A2EMessage):
     type: MessageType = MessageType.LEARN_ADAPT_RESP
     req_id: str = ""
-    updated: list[dict] = Field(default_factory=list)  # list[SkillPerformanceRecord]
+    updated: list[dict] = Field(default_factory=list)  # list[ComponentPerformanceRecord]
     message: str = ""
 
 
 class LearnStatsRequest(A2EMessage):
-    """Agent → Host.  Query performance stats for skills and tools."""
+    """Agent → Host.  Query performance stats for a component."""
     type: MessageType = MessageType.LEARN_STATS_REQ
-    skill_name: str = ""   # empty = all
-    tool_name: str = ""
+    component_name: str = ""   # empty = all components
 
 
 class LearnStatsResponse(A2EMessage):
     type: MessageType = MessageType.LEARN_STATS_RESP
     req_id: str = ""
-    skills: list[dict] = Field(default_factory=list)   # list[SkillPerformanceRecord]
-    tools: list[dict] = Field(default_factory=list)
+    components: list[dict] = Field(default_factory=list)  # list[ComponentPerformanceRecord]
+
+
+# ── Refinement request/response types ──────────────────────
+
+class LearnRefinementPlanRequest(A2EMessage):
+    """Agent → Host.  Request a refinement plan from accumulated feedback."""
+    type: MessageType = MessageType.LEARN_REFINEMENT_PLAN_REQ
+    component_name: str = ""
+    scope: str = "local"
+
+
+class LearnRefinementPlanResponse(A2EMessage):
+    type: MessageType = MessageType.LEARN_REFINEMENT_PLAN_RESP
+    req_id: str = ""
+    plan_id: str = ""
+    proposals: list[dict] = Field(default_factory=list)
+    status: str = ""
+
+
+class LearnRefinementApplyRequest(A2EMessage):
+    """Agent → Host.  Apply a refinement proposal."""
+    type: MessageType = MessageType.LEARN_REFINEMENT_APPLY_REQ
+    proposal: dict = Field(default_factory=dict)
+
+
+class LearnRefinementApplyResponse(A2EMessage):
+    type: MessageType = MessageType.LEARN_REFINEMENT_APPLY_RESP
+    req_id: str = ""
+    refinement_id: str = ""
+    applied_edits: int = 0
+    failed_edits: int = 0
+    rollback_available: bool = False
+    error: str = ""
+
+
+class LearnRefinementRollbackRequest(A2EMessage):
+    """Agent → Host.  Rollback a previously applied refinement."""
+    type: MessageType = MessageType.LEARN_REFINEMENT_ROLLBACK_REQ
+    refinement_id: str = ""
+
+
+class LearnRefinementRollbackResponse(A2EMessage):
+    type: MessageType = MessageType.LEARN_REFINEMENT_ROLLBACK_RESP
+    req_id: str = ""
+    refinement_id: str = ""
+    rolled_back: bool = False
+    error: str = ""
+
+
+class LearnRefinementReviewRequest(A2EMessage):
+    """Agent → Host.  Auto-review a refinement proposal."""
+    type: MessageType = MessageType.LEARN_REFINEMENT_REVIEW_REQ
+    proposal: dict = Field(default_factory=dict)
+
+
+class LearnRefinementReviewResponse(A2EMessage):
+    type: MessageType = MessageType.LEARN_REFINEMENT_REVIEW_RESP
+    req_id: str = ""
+    approved: bool = False
+    confidence_adjusted: float = 0.0
+    reasons: list[str] = Field(default_factory=list)
+    risk_level: str = "low"
+
+
+class LearnRefinementHistoryRequest(A2EMessage):
+    """Agent → Host.  Load refinement history."""
+    type: MessageType = MessageType.LEARN_REFINEMENT_HISTORY_REQ
+
+
+class LearnRefinementHistoryResponse(A2EMessage):
+    type: MessageType = MessageType.LEARN_REFINEMENT_HISTORY_RESP
+    req_id: str = ""
+    entries: list[dict] = Field(default_factory=list)
 
 
 # Learn message types are also valid in A2E
@@ -243,4 +334,14 @@ LEARN_TYPE_MAP = {
     MessageType.LEARN_ADAPT_RESP: LearnAdaptResponse,
     MessageType.LEARN_STATS_REQ: LearnStatsRequest,
     MessageType.LEARN_STATS_RESP: LearnStatsResponse,
+    MessageType.LEARN_REFINEMENT_PLAN_REQ: LearnRefinementPlanRequest,
+    MessageType.LEARN_REFINEMENT_PLAN_RESP: LearnRefinementPlanResponse,
+    MessageType.LEARN_REFINEMENT_APPLY_REQ: LearnRefinementApplyRequest,
+    MessageType.LEARN_REFINEMENT_APPLY_RESP: LearnRefinementApplyResponse,
+    MessageType.LEARN_REFINEMENT_ROLLBACK_REQ: LearnRefinementRollbackRequest,
+    MessageType.LEARN_REFINEMENT_ROLLBACK_RESP: LearnRefinementRollbackResponse,
+    MessageType.LEARN_REFINEMENT_REVIEW_REQ: LearnRefinementReviewRequest,
+    MessageType.LEARN_REFINEMENT_REVIEW_RESP: LearnRefinementReviewResponse,
+    MessageType.LEARN_REFINEMENT_HISTORY_REQ: LearnRefinementHistoryRequest,
+    MessageType.LEARN_REFINEMENT_HISTORY_RESP: LearnRefinementHistoryResponse,
 }

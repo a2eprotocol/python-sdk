@@ -212,7 +212,7 @@ With A2E, test-time training isn't a research experiment. It's a protocol messag
 │     learn/experience/req  {state, action, reward, next_state}   │
 │                               │                                  │
 │  4. Adaptation triggers — weights update in real-time            │
-│     learn/adapt/req  {skill_name, strategy: "ucb1"}             │
+│     learn/adapt/req  {component_name, strategy: "ppo"}             │
 │                               │                                  │
 │  5. Next agent turn uses updated routing                         │
 │     Better skill selection. Better tool choice.                  │
@@ -220,7 +220,7 @@ With A2E, test-time training isn't a research experiment. It's a protocol messag
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-The key insight: A2E doesn't just *record* the feedback. It makes the feedback **operationally actionable** within the same session. The `learn/adapt/req` message triggers immediate adaptation — updated `SkillPerformanceRecord` values, changed routing weights, different skill selection on the next turn. The agent improves *between turns*, not between training runs.
+The key insight: A2E doesn't just *record* the feedback. It makes the feedback **operationally actionable** within the same session. The `learn/adapt/req` message triggers immediate adaptation — updated `ComponentPerformanceRecord` values, changed routing weights, different skill selection on the next turn. The agent improves *between turns*, not between training runs.
 
 And because every message flows through the audit log, you have a complete, timestamped, queryable record of:
 
@@ -282,9 +282,9 @@ while True:
         break
 
 # After the episode, adapt routing weights based on what worked
-records = learn.adapt(skill_name="code_review", strategy="ucb1")
+records = learn.adapt(component_name="code_review", strategy="ucb1")
 for r in records:
-    print(f"{r.skill_name}: avg_score={r.avg_score:.2f}, "
+    print(f"{r.component_name}: avg_score={r.avg_score:.2f}, "
           f"success_rate={r.calls_success/r.calls_total:.0%}")
 ```
 
@@ -348,7 +348,7 @@ for step in range(max_steps):
     # Immediate adaptation: policy updates before the next step
     # This IS on-policy RL — the policy that generated the experience
     # is the same policy that gets updated
-    learn.adapt(skill_name="sql_generation", strategy="ucb1")
+    learn.adapt(component_name="sql_generation", strategy="ucb1")
 
     if step_resp.observation.done:
         break
@@ -467,7 +467,7 @@ learn.adapt(strategy="custom")  # Your off-policy algorithm
 | Best for | Fast adaptation in production, test-time training | Long-term skill improvement, cross-agent learning |
 | A2E messages | `learn/feedback/req` → `learn/adapt/req` | `learn/experience/req` → `learn/adapt/req` (batch) |
 
-The real power: **you run both simultaneously.** On-policy `learn/feedback` + `learn/adapt` keeps the agent sharp in the current session. Off-policy `learn/experience` accumulates the data for larger training runs. The same `LearnPlugin` handles both. The same audit trail logs both. The same `SkillPerformanceRecord` tracks the outcomes of both.
+The real power: **you run both simultaneously.** On-policy `learn/feedback` + `learn/adapt` keeps the agent sharp in the current session. Off-policy `learn/experience` accumulates the data for larger training runs. The same `LearnPlugin` handles both. The same audit trail logs both. The same `ComponentPerformanceRecord` tracks the outcomes of both.
 
 **Every production interaction becomes a training sample.** Every human correction becomes an on-policy advantage signal. Every environment reward becomes a reward model data point. Every experience tuple becomes off-policy replay data. The agent learns on-policy while it works and off-policy while it sleeps. The data compounds. The moat deepens. And it's all in your `LearnPlugin`, your backend, your format.
 
@@ -482,7 +482,7 @@ The `learn/adapt` endpoint supports four strategies, each representing a differe
 | `softmax` | Probability proportional to estimated value — smooth exploration | Continuous deployment, graceful degradation |
 | `custom` | Your strategy. Your algorithm. Your `LearnPlugin`. | Enterprise-specific adaptation policies |
 
-The `SkillPerformanceRecord` — rolling stats per skill: `calls_total`, `calls_success`, `calls_failed`, `avg_duration_ms`, `avg_score`, `p95_duration_ms` — gives you the data to make these decisions. You can query it anytime with `learn/stats/req`.
+The `ComponentPerformanceRecord` — rolling stats per skill: `calls_total`, `calls_success`, `calls_failed`, `avg_duration_ms`, `avg_score`, `p95_duration_ms` — gives you the data to make these decisions. You can query it anytime with `learn/stats/req`.
 
 ### Why This Only Works With Open Protocols
 
@@ -492,7 +492,7 @@ You cannot do test-time training on a closed platform. Here's why:
 
 2. **You can't trigger adaptation.** On a closed platform, adaptation is either "fine-tune in our UI" or "submit a support ticket." You can't send `learn/adapt/req` programmatically. You can't trigger UCB1 exploration mid-session. You can't implement custom adaptation policies.
 
-3. **You can't observe what changed.** On a closed platform, the model gets "better" — but you can't audit *why*. You can't see the `SkillPerformanceRecord` that shows the routing weight changed because skill X had a 0.82 avg_score over 50 calls. You can't verify. You can't debug. You can't govern.
+3. **You can't observe what changed.** On a closed platform, the model gets "better" — but you can't audit *why*. You can't see the `ComponentPerformanceRecord` that shows the routing weight changed because component X had a 0.82 avg_score over 50 calls. You can't verify. You can't debug. You can't govern.
 
 4. **You can't run the reverse loop.** Train-time testing requires that environment signals flow back into learning. On a closed platform, the env and learn capabilities are separate products with separate APIs and separate data stores. They don't talk to each other. The reward from `env/step` doesn't automatically become a `learn/feedback` signal. You have to build that bridge yourself — if they even let you access both.
 

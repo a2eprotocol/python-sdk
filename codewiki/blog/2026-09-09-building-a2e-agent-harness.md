@@ -513,7 +513,7 @@ AGENT                              HOST
   ├── (repeat until done)          │
   │                                 │
   ├── learn.adapt(strategy="ucb1")→│  LearnPlugin.adapt()
-  │    ←── SkillPerformanceRecord───┤  (updated routing weights)
+  │    ←── ComponentPerformanceRecord───┤  (updated routing weights)
   │                                 │
   ├── env.close(episode_id) ───────→│  EnvPlugin.close()
 ```

@@ -20,7 +20,7 @@ from a2e.caps.learn.protocol import (
     MessageType,
     Feedback,
     Experience,
-    SkillPerformanceRecord
+    ComponentPerformanceRecord
 )
 from a2e.core.plugins import (
     A2EPlugin
@@ -50,16 +50,16 @@ class LearnPlugin(A2EPlugin):
         """Persist experience records. Returns count stored."""
         return NotImplementedError
 
-    def _adapt(self, skill_name, strategy) -> List[SkillPerformanceRecord]:
+    def _adapt(self, component_name, strategy) -> List[ComponentPerformanceRecord]:
         """Trigger adaptation for a skill within an agent context."""
         return NotImplementedError
 
-    def _get_stats(self, skill_name, strategy) -> List[SkillPerformanceRecord]:
+    def _get_stats(self, component_name, strategy) -> List[ComponentPerformanceRecord]:
         """
         Fetch performance stats.
 
         Returns dict with keys:
-            "skills": List[SkillPerformanceRecord]
+            "skills": List[ComponentPerformanceRecord]
             "tools":  List[...]
         """
         return NotImplementedError
@@ -131,7 +131,7 @@ class LearnPlugin(A2EPlugin):
         if t == MessageType.LEARN_ADAPT_REQ:
             try:
                 updated = self._adapt(
-                    msg.skill_name,
+                    msg.component_name,
                     msg.strategy,
                 )
 
@@ -161,7 +161,7 @@ class LearnPlugin(A2EPlugin):
         if t == MessageType.LEARN_STATS_REQ:
             try:
                 stats = self._get_stats(
-                    msg.skill_name,
+                    msg.component_name,
                     msg.tool_name,
                 )
 

@@ -127,7 +127,7 @@ class Disclosure:
     def on_skill_done(self, r: SkillCallResponse):
         icon = self._grn("✓") if r.success else self._red("✗")
         self.detail(
-            f"{icon} {r.skill_name} v{r.skill_version} ({r.duration_ms}ms)"
+            f"{icon} {r.component_name} v{r.skill_version} ({r.duration_ms}ms)"
         )
         if not r.success:
             self.detail(f"  error: {r.error}")
@@ -150,7 +150,7 @@ class Disclosure:
 # ═════════════════════════════════════════════════════════════════════════════
 
 class SkillCall(BaseModel):
-    skill_name: str
+    component_name: str
     input: dict[str, Any]
     reason: str = ""
 
@@ -276,7 +276,7 @@ def plan_llm(
         {{
           "reasoning": "<one sentence>",
           "skill_calls": [
-            {{"skill_name": "<n>", "input": {{...}}, "reason": "<why>"}}
+            {{"component_name": "<n>", "input": {{...}}, "reason": "<why>"}}
           ],
           "tool_calls": [
             {{"tool_name": "<n>", "input": {{...}}, "reason": "<why>"}}
@@ -434,10 +434,10 @@ class A2EAgent:
         # 3. Execute skills (parallel)
         skill_results: list[SkillCallResponse] = []
         if plan.skill_calls:
-            d.on_skill_start([c.skill_name for c in plan.skill_calls])
+            d.on_skill_start([c.component_name for c in plan.skill_calls])
             calls_dicts = [
                 {
-                    "skill_name": c.skill_name,
+                    "component_name": c.component_name,
                     "input": c.input,
                     "correlation_id": cid
                 }
@@ -504,7 +504,7 @@ class A2EAgent:
             self._memory.remember(
                 key=f"turn:{cid}",
                 value={"user": user_message, "response": response[:500],
-                       "skills": [r.skill_name for r in skill_results],
+                       "skills": [r.component_name for r in skill_results],
                        "tools": [r.tool_name for r in tool_results]},
                 tier=MemoryTier.EPISODIC.value,
                 tags=["turn", "conversation"],
@@ -532,7 +532,7 @@ class A2EAgent:
             feedbacks.append({
                 "polarity": polarity,
                 "score": 1.0 if r.success else -0.5,
-                "skill_name": r.skill_name,
+                "component_name": r.component_name,
                 "correlation_id": cid,
                 "source": "env",
             })
@@ -543,7 +543,7 @@ class A2EAgent:
             feedbacks.append({
                 "polarity": polarity,
                 "score": 1.0 if r.success else -0.5,
-                "skill_name": r.tool_name,
+                "component_name": r.tool_name,
                 "correlation_id": cid,
                 "source": "env",
             })
@@ -559,7 +559,7 @@ class A2EAgent:
         exp = Experience(
             state={"turn": self._turn, "history_len": len(self.history)},
             action={
-                "skills": [c.skill_name for c in plan.skill_calls],
+                "skills": [c.component_name for c in plan.skill_calls],
                 "tools": [c.tool_name for c in plan.tool_calls],
             },
             reward=sum(
@@ -599,11 +599,11 @@ class A2EAgent:
         for r in skill_results:
             if r.success:
                 ctx_parts.append(
-                    f"[skill:{r.skill_name}]\n{json.dumps(r.output, indent=2)}"
+                    f"[skill:{r.component_name}]\n{json.dumps(r.output, indent=2)}"
                 )
             else:
                 ctx_parts.append(
-                    f"[skill:{r.skill_name} ERROR {r.error_code}]: {r.error}"
+                    f"[skill:{r.component_name} ERROR {r.error_code}]: {r.error}"
                 )
 
         for r in tool_results:
@@ -716,7 +716,7 @@ class A2EAgent:
                 case "stats":
                     skills, tools = self._client.learn.stats()
                     for r in skills + tools:
-                        print(f"  {r.skill_name}: calls={r.calls_total} "
+                        print(f"  {r.component_name}: calls={r.calls_total} "
                               f"score={r.avg_score:.2f}")
                 case "env":
                     snap = self._client.env.observe()
