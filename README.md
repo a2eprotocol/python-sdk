@@ -311,6 +311,7 @@ Full documentation is available at [a2eprotocol.github.io/docs](https://a2eproto
 - [Memory (Plugin & Client)](codewiki/cookbook/memory-plugin.md) — Custom memory plugin with SQLite
 - [Custom Tools (Plugin & Client)](codewiki/cookbook/custom-tools.md) — HTTP tools plugin with streaming
 - [Toolkit Builder (Plugin & Client)](codewiki/cookbook/toolkit-builder.md) — Database toolkit with schema config
+- [Learning (Plugin & Client)](codewiki/cookbook/learning-plugin.md) — Feedback, experience replay, and adaptive refinement
 - [Subagent Orchestrator (Plugin & Client)](codewiki/cookbook/subagent-orchestrator.md) — Multi-agent orchestration with depth control
 - [Planning (Plugin & Client)](codewiki/cookbook/planning-plugin.md) — Plans, tasks, and kanban board views
 
