@@ -189,7 +189,7 @@ This enables the executor to decode incoming NDJSON by looking up the model clas
 flowchart LR
     M[Raw NDJSON line] --> D[Decode via type_registry]
     D --> C{Core message?}
-    C -->|Yes| H[Handle core: handshake/ping/shutdown]
+    C -->|Yes| H[Handle core handshake ping shutdown]
     C -->|No| T[Thread pool dispatch]
     T --> E{Exclusive?}
     E -->|Yes| P1[Single highest-priority plugin]

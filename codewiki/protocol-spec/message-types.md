@@ -73,26 +73,26 @@
 
 ### Learning (18)
 
-|| Type String | Model | Description |
-||-------------|-------|-------------|
-|| `learn/feedback/req` | `LearnFeedbackRequest` | Submit feedback |
-|| `learn/feedback/resp` | `LearnFeedbackResponse` | Feedback result |
-|| `learn/experience/req` | `LearnExperienceRequest` | Record RL experience |
-|| `learn/experience/resp` | `LearnExperienceResponse` | Experience stored |
-|| `learn/adapt/req` | `LearnAdaptRequest` | Fire-and-forget adaptation |
-|| `learn/adapt/resp` | `LearnAdaptResponse` | Adapted records |
-|| `learn/stats/req` | `LearnStatsRequest` | Query stats |
-|| `learn/stats/resp` | `LearnStatsResponse` | Performance data |
-|| `learn/refinement/plan/req` | `LearnRefinementPlanRequest` | Generate refinement proposals |
-|| `learn/refinement/plan/resp` | `LearnRefinementPlanResponse` | Plan result |
-|| `learn/refinement/apply/req` | `LearnRefinementApplyRequest` | Apply a proposal |
-|| `learn/refinement/apply/resp` | `LearnRefinementApplyResponse` | Apply result |
-|| `learn/refinement/rollback/req` | `LearnRefinementRollbackRequest` | Rollback an apply |
-|| `learn/refinement/rollback/resp` | `LearnRefinementRollbackResponse` | Rollback result |
-|| `learn/refinement/review/req` | `LearnRefinementReviewRequest` | Auto-review a proposal |
-|| `learn/refinement/review/resp` | `LearnRefinementReviewResponse` | Review result |
-|| `learn/refinement/history/req` | `LearnRefinementHistoryRequest` | Load refinement history |
-|| `learn/refinement/history/resp` | `LearnRefinementHistoryResponse` | History entries |
+| Type String | Model | Description |
+|-------------|-------|-------------|
+| `learn/feedback/req` | `LearnFeedbackRequest` | Submit feedback |
+| `learn/feedback/resp` | `LearnFeedbackResponse` | Feedback result |
+| `learn/experience/req` | `LearnExperienceRequest` | Record RL experience |
+| `learn/experience/resp` | `LearnExperienceResponse` | Experience stored |
+| `learn/adapt/req` | `LearnAdaptRequest` | Fire-and-forget adaptation |
+| `learn/adapt/resp` | `LearnAdaptResponse` | Adapted records |
+| `learn/stats/req` | `LearnStatsRequest` | Query stats |
+| `learn/stats/resp` | `LearnStatsResponse` | Performance data |
+| `learn/refinement/plan/req` | `LearnRefinementPlanRequest` | Generate refinement proposals |
+| `learn/refinement/plan/resp` | `LearnRefinementPlanResponse` | Plan result |
+| `learn/refinement/apply/req` | `LearnRefinementApplyRequest` | Apply a proposal |
+| `learn/refinement/apply/resp` | `LearnRefinementApplyResponse` | Apply result |
+| `learn/refinement/rollback/req` | `LearnRefinementRollbackRequest` | Rollback an apply |
+| `learn/refinement/rollback/resp` | `LearnRefinementRollbackResponse` | Rollback result |
+| `learn/refinement/review/req` | `LearnRefinementReviewRequest` | Auto-review a proposal |
+| `learn/refinement/review/resp` | `LearnRefinementReviewResponse` | Review result |
+| `learn/refinement/history/req` | `LearnRefinementHistoryRequest` | Load refinement history |
+| `learn/refinement/history/resp` | `LearnRefinementHistoryResponse` | History entries |
 
 ### Skills (5)
 

@@ -2,13 +2,13 @@
 
 ## Capability Identity
 
-|| Property | Value |
-||----------|-------|
-|| Enum | `A2ECapability.LEARNING` |
-|| String | `"learning"` |
-|| Plugin Type | `LearnPlugin` |
-|| Namespace | `learn/*` |
-|| Message Count | 18 |
+| Property | Value |
+|----------|-------|
+| Enum | `A2ECapability.LEARNING` |
+| String | `"learning"` |
+| Plugin Type | `LearnPlugin` |
+| Namespace | `learn/*` |
+| Message Count | 18 |
 
 ## Overview
 
@@ -68,27 +68,27 @@ sequenceDiagram
 
 Agent (or external trainer) → Host. Submit feedback signals.
 
-|| Field | Type | Required | Default | Description |
-||-------|------|----------|---------|-------------|
-|| `type` | `str` | Yes | `"learn/feedback/req"` | Message type |
-|| `id` | `str` | Yes | auto | Message UUID |
-|| `version` | `str` | Yes | `"1.0"` | Protocol version |
-|| `ts` | `float` | Yes | auto | Timestamp |
-|| `feedbacks` | `list[Feedback]` | Yes | — | List of feedback signals |
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `type` | `str` | Yes | `"learn/feedback/req"` | Message type |
+| `id` | `str` | Yes | auto | Message UUID |
+| `version` | `str` | Yes | `"1.0"` | Protocol version |
+| `ts` | `float` | Yes | auto | Timestamp |
+| `feedbacks` | `list[Feedback]` | Yes | — | List of feedback signals |
 
 #### learn/feedback/resp — LearnFeedbackResponse
 
 Host → Agent.
 
-|| Field | Type | Required | Default | Description |
-||-------|------|----------|---------|-------------|
-|| `type` | `str` | Yes | `"learn/feedback/resp"` | Message type |
-|| `id` | `str` | Yes | auto | Message UUID |
-|| `version` | `str` | Yes | `"1.0"` | Protocol version |
-|| `ts` | `float` | Yes | auto | Timestamp |
-|| `req_id` | `str` | Yes | `""` | Echoes request ID |
-|| `recorded` | `int` | Yes | `0` | Number of feedbacks recorded |
-|| `new_score` | `float` or `None` | No | `None` | Updated running component score if available |
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `type` | `str` | Yes | `"learn/feedback/resp"` | Message type |
+| `id` | `str` | Yes | auto | Message UUID |
+| `version` | `str` | Yes | `"1.0"` | Protocol version |
+| `ts` | `float` | Yes | auto | Timestamp |
+| `req_id` | `str` | Yes | `""` | Echoes request ID |
+| `recorded` | `int` | Yes | `0` | Number of feedbacks recorded |
+| `new_score` | `float` or `None` | No | `None` | Updated running component score if available |
 
 ### Experience (2)
 
@@ -96,26 +96,26 @@ Host → Agent.
 
 Agent → Host. Store experience tuples for later replay.
 
-|| Field | Type | Required | Default | Description |
-||-------|------|----------|---------|-------------|
-|| `type` | `str` | Yes | `"learn/experience/req"` | Message type |
-|| `id` | `str` | Yes | auto | Message UUID |
-|| `version` | `str` | Yes | `"1.0"` | Protocol version |
-|| `ts` | `float` | Yes | auto | Timestamp |
-|| `experiences` | `list[Experience]` | No | `[]` | Experience tuples to store |
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `type` | `str` | Yes | `"learn/experience/req"` | Message type |
+| `id` | `str` | Yes | auto | Message UUID |
+| `version` | `str` | Yes | `"1.0"` | Protocol version |
+| `ts` | `float` | Yes | auto | Timestamp |
+| `experiences` | `list[Experience]` | No | `[]` | Experience tuples to store |
 
 #### learn/experience/resp — LearnExperienceResponse
 
 Host → Agent.
 
-|| Field | Type | Required | Default | Description |
-||-------|------|----------|---------|-------------|
-|| `type` | `str` | Yes | `"learn/experience/resp"` | Message type |
-|| `id` | `str` | Yes | auto | Message UUID |
-|| `version` | `str` | Yes | `"1.0"` | Protocol version |
-|| `ts` | `float` | Yes | auto | Timestamp |
-|| `req_id` | `str` | Yes | `""` | Echoes request ID |
-|| `stored` | `int` | Yes | `0` | Number of experiences stored |
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `type` | `str` | Yes | `"learn/experience/resp"` | Message type |
+| `id` | `str` | Yes | auto | Message UUID |
+| `version` | `str` | Yes | `"1.0"` | Protocol version |
+| `ts` | `float` | Yes | auto | Timestamp |
+| `req_id` | `str` | Yes | `""` | Echoes request ID |
+| `stored` | `int` | Yes | `0` | Number of experiences stored |
 
 ### Adapt (2) — Fire-and-Forget Optimization
 
@@ -123,38 +123,38 @@ Host → Agent.
 
 Agent → Host. Request that the host updates component routing weights based on accumulated feedback and experiences. The server handles the full plan → review → apply → stats workflow internally.
 
-|| Field | Type | Required | Default | Description |
-||-------|------|----------|---------|-------------|
-|| `type` | `str` | Yes | `"learn/adapt/req"` | Message type |
-|| `id` | `str` | Yes | auto | Message UUID |
-|| `version` | `str` | Yes | `"1.0"` | Protocol version |
-|| `ts` | `float` | Yes | auto | Timestamp |
-|| `component_name` | `str` | No | `""` | Specific component (empty = adapt all) |
-|| `strategy` | `str` | No | `"ppo"` | Adaptation strategy (see below) |
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `type` | `str` | Yes | `"learn/adapt/req"` | Message type |
+| `id` | `str` | Yes | auto | Message UUID |
+| `version` | `str` | Yes | `"1.0"` | Protocol version |
+| `ts` | `float` | Yes | auto | Timestamp |
+| `component_name` | `str` | No | `""` | Specific component (empty = adapt all) |
+| `strategy` | `str` | No | `"ppo"` | Adaptation strategy (see below) |
 
 **Adaptation strategies:**
 
-|| Strategy | Description |
-||----------|-------------|
-|| `ppo` | Proximal Policy Optimization — policy gradient with clipping |
-|| `ucb1` | Upper Confidence Bound — balances exploration/exploitation |
-|| `epsilon_greedy` | Epsilon-greedy — mostly exploit, occasionally explore |
-|| `softmax` | Softmax/Boltzmann — probability proportional to value |
-|| `custom` | Host-defined custom strategy |
+| Strategy | Description |
+|----------|-------------|
+| `ppo` | Proximal Policy Optimization — policy gradient with clipping |
+| `ucb1` | Upper Confidence Bound — balances exploration/exploitation |
+| `epsilon_greedy` | Epsilon-greedy — mostly exploit, occasionally explore |
+| `softmax` | Softmax/Boltzmann — probability proportional to value |
+| `custom` | Host-defined custom strategy |
 
 #### learn/adapt/resp — LearnAdaptResponse
 
 Host → Agent.
 
-|| Field | Type | Required | Default | Description |
-||-------|------|----------|---------|-------------|
-|| `type` | `str` | Yes | `"learn/adapt/resp"` | Message type |
-|| `id` | `str` | Yes | auto | Message UUID |
-|| `version` | `str` | Yes | `"1.0"` | Protocol version |
-|| `ts` | `float` | Yes | auto | Timestamp |
-|| `req_id` | `str` | Yes | `""` | Echoes request ID |
-|| `updated` | `list[dict]` | Yes | `[]` | List of updated ComponentPerformanceRecords |
-|| `message` | `str` | Yes | `""` | Human-readable status message |
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `type` | `str` | Yes | `"learn/adapt/resp"` | Message type |
+| `id` | `str` | Yes | auto | Message UUID |
+| `version` | `str` | Yes | `"1.0"` | Protocol version |
+| `ts` | `float` | Yes | auto | Timestamp |
+| `req_id` | `str` | Yes | `""` | Echoes request ID |
+| `updated` | `list[dict]` | Yes | `[]` | List of updated ComponentPerformanceRecords |
+| `message` | `str` | Yes | `""` | Human-readable status message |
 
 ### Stats (2) — Performance Query
 
@@ -162,26 +162,26 @@ Host → Agent.
 
 Agent → Host. Query performance statistics for components.
 
-|| Field | Type | Required | Default | Description |
-||-------|------|----------|---------|-------------|
-|| `type` | `str` | Yes | `"learn/stats/req"` | Message type |
-|| `id` | `str` | Yes | auto | Message UUID |
-|| `version` | `str` | Yes | `"1.0"` | Protocol version |
-|| `ts` | `float` | Yes | auto | Timestamp |
-|| `component_name` | `str` | No | `""` | Filter by component (empty = all) |
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `type` | `str` | Yes | `"learn/stats/req"` | Message type |
+| `id` | `str` | Yes | auto | Message UUID |
+| `version` | `str` | Yes | `"1.0"` | Protocol version |
+| `ts` | `float` | Yes | auto | Timestamp |
+| `component_name` | `str` | No | `""` | Filter by component (empty = all) |
 
 #### learn/stats/resp — LearnStatsResponse
 
 Host → Agent.
 
-|| Field | Type | Required | Default | Description |
-||-------|------|----------|---------|-------------|
-|| `type` | `str` | Yes | `"learn/stats/resp"` | Message type |
-|| `id` | `str` | Yes | auto | Message UUID |
-|| `version` | `str` | Yes | `"1.0"` | Protocol version |
-|| `ts` | `float` | Yes | auto | Timestamp |
-|| `req_id` | `str` | Yes | `""` | Echoes request ID |
-|| `components` | `list[dict]` | Yes | `[]` | List of ComponentPerformanceRecords |
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `type` | `str` | Yes | `"learn/stats/resp"` | Message type |
+| `id` | `str` | Yes | auto | Message UUID |
+| `version` | `str` | Yes | `"1.0"` | Protocol version |
+| `ts` | `float` | Yes | auto | Timestamp |
+| `req_id` | `str` | Yes | `""` | Echoes request ID |
+| `components` | `list[dict]` | Yes | `[]` | List of ComponentPerformanceRecords |
 
 ### Refinement Plan (2)
 
@@ -189,29 +189,29 @@ Host → Agent.
 
 Agent → Host. Generate refinement proposals from accumulated feedback.
 
-|| Field | Type | Required | Default | Description |
-||-------|------|----------|---------|-------------|
-|| `type` | `str` | Yes | `"learn/refinement/plan/req"` | Message type |
-|| `id` | `str` | Yes | auto | Message UUID |
-|| `version` | `str` | Yes | `"1.0"` | Protocol version |
-|| `ts` | `float` | Yes | auto | Timestamp |
-|| `component_name` | `str` | No | `""` | Target component (empty = all) |
-|| `scope` | `str` | No | `"local"` | Scope of refinement |
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `type` | `str` | Yes | `"learn/refinement/plan/req"` | Message type |
+| `id` | `str` | Yes | auto | Message UUID |
+| `version` | `str` | Yes | `"1.0"` | Protocol version |
+| `ts` | `float` | Yes | auto | Timestamp |
+| `component_name` | `str` | No | `""` | Target component (empty = all) |
+| `scope` | `str` | No | `"local"` | Scope of refinement |
 
 #### learn/refinement/plan/resp — LearnRefinementPlanResponse
 
 Host → Agent.
 
-|| Field | Type | Required | Default | Description |
-||-------|------|----------|---------|-------------|
-|| `type` | `str` | Yes | `"learn/refinement/plan/resp"` | Message type |
-|| `id` | `str` | Yes | auto | Message UUID |
-|| `version` | `str` | Yes | `"1.0"` | Protocol version |
-|| `ts` | `float` | Yes | auto | Timestamp |
-|| `req_id` | `str` | Yes | `""` | Echoes request ID |
-|| `plan_id` | `str` | Yes | — | Unique plan identifier |
-|| `proposals` | `list[dict]` | Yes | `[]` | Refinement proposals |
-|| `status` | `str` | Yes | — | Plan status (`ready`, `empty`, etc.) |
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `type` | `str` | Yes | `"learn/refinement/plan/resp"` | Message type |
+| `id` | `str` | Yes | auto | Message UUID |
+| `version` | `str` | Yes | `"1.0"` | Protocol version |
+| `ts` | `float` | Yes | auto | Timestamp |
+| `req_id` | `str` | Yes | `""` | Echoes request ID |
+| `plan_id` | `str` | Yes | — | Unique plan identifier |
+| `proposals` | `list[dict]` | Yes | `[]` | Refinement proposals |
+| `status` | `str` | Yes | — | Plan status (`ready`, `empty`, etc.) |
 
 ### Refinement Apply (2)
 
@@ -219,30 +219,30 @@ Host → Agent.
 
 Agent → Host. Apply a refinement proposal atomically with before-snapshot for rollback.
 
-|| Field | Type | Required | Default | Description |
-||-------|------|----------|---------|-------------|
-|| `type` | `str` | Yes | `"learn/refinement/apply/req"` | Message type |
-|| `id` | `str` | Yes | auto | Message UUID |
-|| `version` | `str` | Yes | `"1.0"` | Protocol version |
-|| `ts` | `float` | Yes | auto | Timestamp |
-|| `proposal` | `dict` | Yes | — | The proposal to apply |
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `type` | `str` | Yes | `"learn/refinement/apply/req"` | Message type |
+| `id` | `str` | Yes | auto | Message UUID |
+| `version` | `str` | Yes | `"1.0"` | Protocol version |
+| `ts` | `float` | Yes | auto | Timestamp |
+| `proposal` | `dict` | Yes | — | The proposal to apply |
 
 #### learn/refinement/apply/resp — LearnRefinementApplyResponse
 
 Host → Agent.
 
-|| Field | Type | Required | Default | Description |
-||-------|------|----------|---------|-------------|
-|| `type` | `str` | Yes | `"learn/refinement/apply/resp"` | Message type |
-|| `id` | `str` | Yes | auto | Message UUID |
-|| `version` | `str` | Yes | `"1.0"` | Protocol version |
-|| `ts` | `float` | Yes | auto | Timestamp |
-|| `req_id` | `str` | Yes | `""` | Echoes request ID |
-|| `refinement_id` | `str` | Yes | — | Unique refinement identifier |
-|| `applied_edits` | `int` | Yes | `0` | Number of edits applied |
-|| `failed_edits` | `int` | Yes | `0` | Number of edits that failed |
-|| `rollback_available` | `bool` | Yes | `False` | Whether rollback is available |
-|| `error` | `str` | Yes | `""` | Error message if any |
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `type` | `str` | Yes | `"learn/refinement/apply/resp"` | Message type |
+| `id` | `str` | Yes | auto | Message UUID |
+| `version` | `str` | Yes | `"1.0"` | Protocol version |
+| `ts` | `float` | Yes | auto | Timestamp |
+| `req_id` | `str` | Yes | `""` | Echoes request ID |
+| `refinement_id` | `str` | Yes | — | Unique refinement identifier |
+| `applied_edits` | `int` | Yes | `0` | Number of edits applied |
+| `failed_edits` | `int` | Yes | `0` | Number of edits that failed |
+| `rollback_available` | `bool` | Yes | `False` | Whether rollback is available |
+| `error` | `str` | Yes | `""` | Error message if any |
 
 ### Refinement Rollback (2)
 
@@ -250,28 +250,28 @@ Host → Agent.
 
 Agent → Host. Rollback a previously applied refinement.
 
-|| Field | Type | Required | Default | Description |
-||-------|------|----------|---------|-------------|
-|| `type` | `str` | Yes | `"learn/refinement/rollback/req"` | Message type |
-|| `id` | `str` | Yes | auto | Message UUID |
-|| `version` | `str` | Yes | `"1.0"` | Protocol version |
-|| `ts` | `float` | Yes | auto | Timestamp |
-|| `refinement_id` | `str` | Yes | — | The refinement to rollback |
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `type` | `str` | Yes | `"learn/refinement/rollback/req"` | Message type |
+| `id` | `str` | Yes | auto | Message UUID |
+| `version` | `str` | Yes | `"1.0"` | Protocol version |
+| `ts` | `float` | Yes | auto | Timestamp |
+| `refinement_id` | `str` | Yes | — | The refinement to rollback |
 
 #### learn/refinement/rollback/resp — LearnRefinementRollbackResponse
 
 Host → Agent.
 
-|| Field | Type | Required | Default | Description |
-||-------|------|----------|---------|-------------|
-|| `type` | `str` | Yes | `"learn/refinement/rollback/resp"` | Message type |
-|| `id` | `str` | Yes | auto | Message UUID |
-|| `version` | `str` | Yes | `"1.0"` | Protocol version |
-|| `ts` | `float` | Yes | auto | Timestamp |
-|| `req_id` | `str` | Yes | `""` | Echoes request ID |
-|| `refinement_id` | `str` | Yes | — | The refinement that was rolled back |
-|| `rolled_back` | `bool` | Yes | `False` | Whether rollback succeeded |
-|| `error` | `str` | Yes | `""` | Error message if any |
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `type` | `str` | Yes | `"learn/refinement/rollback/resp"` | Message type |
+| `id` | `str` | Yes | auto | Message UUID |
+| `version` | `str` | Yes | `"1.0"` | Protocol version |
+| `ts` | `float` | Yes | auto | Timestamp |
+| `req_id` | `str` | Yes | `""` | Echoes request ID |
+| `refinement_id` | `str` | Yes | — | The refinement that was rolled back |
+| `rolled_back` | `bool` | Yes | `False` | Whether rollback succeeded |
+| `error` | `str` | Yes | `""` | Error message if any |
 
 ### Refinement Review (2)
 
@@ -279,29 +279,29 @@ Host → Agent.
 
 Agent → Host. Auto-review a refinement proposal (confidence, conflicts, history).
 
-|| Field | Type | Required | Default | Description |
-||-------|------|----------|---------|-------------|
-|| `type` | `str` | Yes | `"learn/refinement/review/req"` | Message type |
-|| `id` | `str` | Yes | auto | Message UUID |
-|| `version` | `str` | Yes | `"1.0"` | Protocol version |
-|| `ts` | `float` | Yes | auto | Timestamp |
-|| `proposal` | `dict` | Yes | — | The proposal to review |
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `type` | `str` | Yes | `"learn/refinement/review/req"` | Message type |
+| `id` | `str` | Yes | auto | Message UUID |
+| `version` | `str` | Yes | `"1.0"` | Protocol version |
+| `ts` | `float` | Yes | auto | Timestamp |
+| `proposal` | `dict` | Yes | — | The proposal to review |
 
 #### learn/refinement/review/resp — LearnRefinementReviewResponse
 
 Host → Agent.
 
-|| Field | Type | Required | Default | Description |
-||-------|------|----------|---------|-------------|
-|| `type` | `str` | Yes | `"learn/refinement/review/resp"` | Message type |
-|| `id` | `str` | Yes | auto | Message UUID |
-|| `version` | `str` | Yes | `"1.0"` | Protocol version |
-|| `ts` | `float` | Yes | auto | Timestamp |
-|| `req_id` | `str` | Yes | `""` | Echoes request ID |
-|| `approved` | `bool` | Yes | `False` | Whether the proposal is approved |
-|| `confidence_adjusted` | `bool` | Yes | `False` | Whether confidence was adjusted |
-|| `reasons` | `list[str]` | Yes | `[]` | Review reasons |
-|| `risk_level` | `str` | Yes | `"low"` | Risk level (`low`, `medium`, `high`) |
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `type` | `str` | Yes | `"learn/refinement/review/resp"` | Message type |
+| `id` | `str` | Yes | auto | Message UUID |
+| `version` | `str` | Yes | `"1.0"` | Protocol version |
+| `ts` | `float` | Yes | auto | Timestamp |
+| `req_id` | `str` | Yes | `""` | Echoes request ID |
+| `approved` | `bool` | Yes | `False` | Whether the proposal is approved |
+| `confidence_adjusted` | `bool` | Yes | `False` | Whether confidence was adjusted |
+| `reasons` | `list[str]` | Yes | `[]` | Review reasons |
+| `risk_level` | `str` | Yes | `"low"` | Risk level (`low`, `medium`, `high`) |
 
 ### Refinement History (2)
 
@@ -309,25 +309,25 @@ Host → Agent.
 
 Agent → Host. Load refinement history.
 
-|| Field | Type | Required | Default | Description |
-||-------|------|----------|---------|-------------|
-|| `type` | `str` | Yes | `"learn/refinement/history/req"` | Message type |
-|| `id` | `str` | Yes | auto | Message UUID |
-|| `version` | `str` | Yes | `"1.0"` | Protocol version |
-|| `ts` | `float` | Yes | auto | Timestamp |
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `type` | `str` | Yes | `"learn/refinement/history/req"` | Message type |
+| `id` | `str` | Yes | auto | Message UUID |
+| `version` | `str` | Yes | `"1.0"` | Protocol version |
+| `ts` | `float` | Yes | auto | Timestamp |
 
 #### learn/refinement/history/resp — LearnRefinementHistoryResponse
 
 Host → Agent.
 
-|| Field | Type | Required | Default | Description |
-||-------|------|----------|---------|-------------|
-|| `type` | `str` | Yes | `"learn/refinement/history/resp"` | Message type |
-|| `id` | `str` | Yes | auto | Message UUID |
-|| `version` | `str` | Yes | `"1.0"` | Protocol version |
-|| `ts` | `float` | Yes | auto | Timestamp |
-|| `req_id` | `str` | Yes | `""` | Echoes request ID |
-|| `entries` | `list[dict]` | Yes | `[]` | Refinement history entries |
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `type` | `str` | Yes | `"learn/refinement/history/resp"` | Message type |
+| `id` | `str` | Yes | auto | Message UUID |
+| `version` | `str` | Yes | `"1.0"` | Protocol version |
+| `ts` | `float` | Yes | auto | Timestamp |
+| `req_id` | `str` | Yes | `""` | Echoes request ID |
+| `entries` | `list[dict]` | Yes | `[]` | Refinement history entries |
 
 ## Data Models
 
@@ -335,94 +335,94 @@ Host → Agent.
 
 A single feedback signal attached to an agent turn or component call.
 
-|| Field | Type | Required | Default | Description |
-||-------|------|----------|---------|-------------|
-|| `feedback_id` | `str` | No | auto (`b_{ns}`) | Unique feedback identifier |
-|| `correlation_id` | `str` | No | `""` | Ties to agent turn |
-|| `session_id` | `str` | No | `""` | Session identifier |
-|| `rated_turn` | `RatedTurn` | No | `None` | The turn that was rated |
-|| `polarity` | `FeedbackPolarity` | Yes | — | Signal polarity |
-|| `score` | `float` | No | `0.0` | Normalized score: -1.0 to +1.0 |
-|| `dimension` | `FeedbackDimension` | No | `HELPFULNESS` | Rating dimension |
-|| `confidence` | `float` | No | `1.0` | Confidence weight (0.0-1.0) |
-|| `comment` | `str` | No | `""` | Human-readable comment |
-|| `correction` | `str` | No | `""` | Required for CORRECTIVE polarity |
-|| `correction_span` | `tuple[int, int]` | No | `None` | Character range for correction |
-|| `source` | `FeedbackSource` | No | `HUMAN` | Who provided the feedback |
-|| `annotator_id` | `str` | No | `""` | Annotator identifier |
-|| `ts` | `float` | No | auto | Feedback timestamp |
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `feedback_id` | `str` | No | auto (`b_{ns}`) | Unique feedback identifier |
+| `correlation_id` | `str` | No | `""` | Ties to agent turn |
+| `session_id` | `str` | No | `""` | Session identifier |
+| `rated_turn` | `RatedTurn` | No | `None` | The turn that was rated |
+| `polarity` | `FeedbackPolarity` | Yes | — | Signal polarity |
+| `score` | `float` | No | `0.0` | Normalized score: -1.0 to +1.0 |
+| `dimension` | `FeedbackDimension` | No | `HELPFULNESS` | Rating dimension |
+| `confidence` | `float` | No | `1.0` | Confidence weight (0.0-1.0) |
+| `comment` | `str` | No | `""` | Human-readable comment |
+| `correction` | `str` | No | `""` | Required for CORRECTIVE polarity |
+| `correction_span` | `tuple[int, int]` | No | `None` | Character range for correction |
+| `source` | `FeedbackSource` | No | `HUMAN` | Who provided the feedback |
+| `annotator_id` | `str` | No | `""` | Annotator identifier |
+| `ts` | `float` | No | auto | Feedback timestamp |
 
 **Validation rule:** `CORRECTIVE` polarity MUST include a `correction` string (enforced by `@model_validator`).
 
 ### FeedbackPolarity
 
-|| Value | Description |
-||-------|-------------|
-|| `positive` | Positive feedback |
-|| `negative` | Negative feedback |
-|| `neutral` | Neutral/observation feedback |
-|| `corrective` | "You should have done X instead" — requires `correction` field |
+| Value | Description |
+|-------|-------------|
+| `positive` | Positive feedback |
+| `negative` | Negative feedback |
+| `neutral` | Neutral/observation feedback |
+| `corrective` | "You should have done X instead" — requires `correction` field |
 
 ### FeedbackDimension
 
-|| Value | Description |
-||-------|-------------|
-|| `correctness` | Is the answer correct? |
-|| `helpfulness` | Is the response helpful? |
-|| `safety` | Is the response safe? |
-|| `tone` | Is the tone appropriate? |
-|| `plan_quality` | Is the plan/strategy good? |
+| Value | Description |
+|-------|-------------|
+| `correctness` | Is the answer correct? |
+| `helpfulness` | Is the response helpful? |
+| `safety` | Is the response safe? |
+| `tone` | Is the tone appropriate? |
+| `plan_quality` | Is the plan/strategy good? |
 
 ### FeedbackSource
 
-|| Value | Description |
-||-------|-------------|
-|| `human` | Human annotator |
-|| `env` | Environment signal (test pass/fail, tool error, etc.) |
-|| `self` | Model self-critique |
+| Value | Description |
+|-------|-------------|
+| `human` | Human annotator |
+| `env` | Environment signal (test pass/fail, tool error, etc.) |
+| `self` | Model self-critique |
 
 ### RatedTurn
 
 Captures enough context to reconstruct a training pair later.
 
-|| Field | Type | Required | Default | Description |
-||-------|------|----------|---------|-------------|
-|| `prompt` | `str` | Yes | — | Full prompt sent to model/component |
-|| `response` | `str` | Yes | — | The response that was rated |
-|| `model` | `str` | Yes | — | Model identifier |
-|| `environment` | `Any` | No | `None` | Environment context |
-|| `version` | `str` | No | `None` | Version identifier |
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `prompt` | `str` | Yes | — | Full prompt sent to model/component |
+| `response` | `str` | Yes | — | The response that was rated |
+| `model` | `str` | Yes | — | Model identifier |
+| `environment` | `Any` | No | `None` | Environment context |
+| `version` | `str` | No | `None` | Version identifier |
 
 ### Experience
 
 An RL-style (s, a, r, s', done) tuple for replay.
 
-|| Field | Type | Required | Default | Description |
-||-------|------|----------|---------|-------------|
-|| `experience_id` | `str` | No | auto UUID | Unique experience identifier |
-|| `state` | `dict` | No | `{}` | Serialized agent context before action |
-|| `action` | `dict` | No | `{}` | `{component_name, input}` |
-|| `reward` | `float` | No | `0.0` | Scalar reward from environment |
-|| `next_state` | `dict` | No | `{}` | Serialized agent context after action |
-|| `done` | `bool` | No | `False` | Whether episode ended |
-|| `episode_id` | `str` | No | `""` | Episode identifier |
-|| `step` | `int` | No | `0` | Step number within episode |
-|| `ts` | `float` | No | auto | Experience timestamp |
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `experience_id` | `str` | No | auto UUID | Unique experience identifier |
+| `state` | `dict` | No | `{}` | Serialized agent context before action |
+| `action` | `dict` | No | `{}` | `{component_name, input}` |
+| `reward` | `float` | No | `0.0` | Scalar reward from environment |
+| `next_state` | `dict` | No | `{}` | Serialized agent context after action |
+| `done` | `bool` | No | `False` | Whether episode ended |
+| `episode_id` | `str` | No | `""` | Episode identifier |
+| `step` | `int` | No | `0` | Step number within episode |
+| `ts` | `float` | No | auto | Experience timestamp |
 
 ### ComponentPerformanceRecord
 
 Rolling performance stats tracked per component, used for adaptive routing (replaces `SkillPerformanceRecord`).
 
-|| Field | Type | Required | Default | Description |
-||-------|------|----------|---------|-------------|
-|| `component_name` | `str` | Yes | — | Component identifier (skill, tool, subagent, toolkit) |
-|| `calls_total` | `int` | No | `0` | Total calls |
-|| `calls_success` | `int` | No | `0` | Successful calls |
-|| `calls_failed` | `int` | No | `0` | Failed calls |
-|| `avg_duration_ms` | `float` | No | `0.0` | Average duration |
-|| `avg_score` | `float` | No | `0.0` | Mean feedback score (-1 to +1) |
-|| `last_called` | `float` | No | `0.0` | Last call timestamp |
-|| `p95_duration_ms` | `float` | No | `0.0` | 95th percentile duration |
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `component_name` | `str` | Yes | — | Component identifier (skill, tool, subagent, toolkit) |
+| `calls_total` | `int` | No | `0` | Total calls |
+| `calls_success` | `int` | No | `0` | Successful calls |
+| `calls_failed` | `int` | No | `0` | Failed calls |
+| `avg_duration_ms` | `float` | No | `0.0` | Average duration |
+| `avg_score` | `float` | No | `0.0` | Mean feedback score (-1 to +1) |
+| `last_called` | `float` | No | `0.0` | Last call timestamp |
+| `p95_duration_ms` | `float` | No | `0.0` | 95th percentile duration |
 
 ## Feedback Derivation Methods
 

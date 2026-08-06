@@ -8,10 +8,10 @@ Capability negotiation occurs during the handshake. The agent declares which cap
 
 ```mermaid
 flowchart LR
-    AC[agent_caps: tools, memory, env] --> NEG[_negotiate_caps]
-    PL[Loaded Plugins: ToolPlugin, MemoryPlugin, EnvPlugin] --> NEG
-    NEG --> ACC[accepted_caps: tools, memory, env]
-    NEG --> REJ[rejected: chains not loaded]
+    AC[agent_caps tools, memory, env] --> NEG[_negotiate_caps]
+    PL[Loaded Plugins ToolPlugin, MemoryPlugin, EnvPlugin] --> NEG
+    NEG --> ACC[accepted_caps tools, memory, env]
+    NEG --> REJ[rejected chains not loaded]
 ```
 
 1. Agent sends `agent_caps` list (e.g. `["tools", "memory", "env"]`)

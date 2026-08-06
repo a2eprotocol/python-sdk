@@ -8,26 +8,26 @@ The **learn** capability provides a feedback-driven learning system — agents c
 
 ## Protocol Messages (18 types)
 
-|| Type String | Model | Direction |
-||-------------|-------|-----------|
-|| `learn/feedback/req` | `LearnFeedbackRequest` | Agent → Host |
-|| `learn/feedback/resp` | `LearnFeedbackResponse` | Host → Agent |
-|| `learn/experience/req` | `LearnExperienceRequest` | Agent → Host |
-|| `learn/experience/resp` | `LearnExperienceResponse` | Host → Agent |
-|| `learn/adapt/req` | `LearnAdaptRequest` | Agent → Host |
-|| `learn/adapt/resp` | `LearnAdaptResponse` | Host → Agent |
-|| `learn/stats/req` | `LearnStatsRequest` | Agent → Host |
-|| `learn/stats/resp` | `LearnStatsResponse` | Host → Agent |
-|| `learn/refinement/plan/req` | `LearnRefinementPlanRequest` | Agent → Host |
-|| `learn/refinement/plan/resp` | `LearnRefinementPlanResponse` | Host → Agent |
-|| `learn/refinement/apply/req` | `LearnRefinementApplyRequest` | Agent → Host |
-|| `learn/refinement/apply/resp` | `LearnRefinementApplyResponse` | Host → Agent |
-|| `learn/refinement/rollback/req` | `LearnRefinementRollbackRequest` | Agent → Host |
-|| `learn/refinement/rollback/resp` | `LearnRefinementRollbackResponse` | Host → Agent |
-|| `learn/refinement/review/req` | `LearnRefinementReviewRequest` | Agent → Host |
-|| `learn/refinement/review/resp` | `LearnRefinementReviewResponse` | Host → Agent |
-|| `learn/refinement/history/req` | `LearnRefinementHistoryRequest` | Agent → Host |
-|| `learn/refinement/history/resp` | `LearnRefinementHistoryResponse` | Host → Agent |
+| Type String | Model | Direction |
+|-------------|-------|-----------|
+| `learn/feedback/req` | `LearnFeedbackRequest` | Agent → Host |
+| `learn/feedback/resp` | `LearnFeedbackResponse` | Host → Agent |
+| `learn/experience/req` | `LearnExperienceRequest` | Agent → Host |
+| `learn/experience/resp` | `LearnExperienceResponse` | Host → Agent |
+| `learn/adapt/req` | `LearnAdaptRequest` | Agent → Host |
+| `learn/adapt/resp` | `LearnAdaptResponse` | Host → Agent |
+| `learn/stats/req` | `LearnStatsRequest` | Agent → Host |
+| `learn/stats/resp` | `LearnStatsResponse` | Host → Agent |
+| `learn/refinement/plan/req` | `LearnRefinementPlanRequest` | Agent → Host |
+| `learn/refinement/plan/resp` | `LearnRefinementPlanResponse` | Host → Agent |
+| `learn/refinement/apply/req` | `LearnRefinementApplyRequest` | Agent → Host |
+| `learn/refinement/apply/resp` | `LearnRefinementApplyResponse` | Host → Agent |
+| `learn/refinement/rollback/req` | `LearnRefinementRollbackRequest` | Agent → Host |
+| `learn/refinement/rollback/resp` | `LearnRefinementRollbackResponse` | Host → Agent |
+| `learn/refinement/review/req` | `LearnRefinementReviewRequest` | Agent → Host |
+| `learn/refinement/review/resp` | `LearnRefinementReviewResponse` | Host → Agent |
+| `learn/refinement/history/req` | `LearnRefinementHistoryRequest` | Agent → Host |
+| `learn/refinement/history/resp` | `LearnRefinementHistoryResponse` | Host → Agent |
 
 ### Feedback Model
 
@@ -37,19 +37,19 @@ The **learn** capability provides a feedback-driven learning system — agents c
 
 **FeedbackSource**: `HUMAN`, `ENV`, `SELF`
 
-|| Field | Type | Description |
-||-------|------|-------------|
-|| `correlation_id` | `str` | Links to the original request |
-|| `polarity` | `FeedbackPolarity` | Positive/negative/neutral/corrective |
-|| `score` | `float` | -1.0 to +1.0 |
-|| `dimension` | `FeedbackDimension` | What aspect is being evaluated |
-|| `confidence` | `float` | 0-1 confidence in this feedback |
-|| `comment` | `str` | Free-text explanation |
-|| `correction` | `str` | Corrected output (for CORRECTIVE polarity) |
-|| `correction_span` | `dict` | Position of the correction |
-|| `source` | `FeedbackSource` | Who gave the feedback |
-|| `annotator_id` | `str` | Annotator identifier |
-|| `rated_turn` | `RatedTurn` | Associated prompt/response pair |
+| Field | Type | Description |
+|-------|------|-------------|
+| `correlation_id` | `str` | Links to the original request |
+| `polarity` | `FeedbackPolarity` | Positive/negative/neutral/corrective |
+| `score` | `float` | -1.0 to +1.0 |
+| `dimension` | `FeedbackDimension` | What aspect is being evaluated |
+| `confidence` | `float` | 0-1 confidence in this feedback |
+| `comment` | `str` | Free-text explanation |
+| `correction` | `str` | Corrected output (for CORRECTIVE polarity) |
+| `correction_span` | `dict` | Position of the correction |
+| `source` | `FeedbackSource` | Who gave the feedback |
+| `annotator_id` | `str` | Annotator identifier |
+| `rated_turn` | `RatedTurn` | Associated prompt/response pair |
 
 **Validation**: CORRECTIVE polarity requires `correction` text (enforced by Pydantic `@model_validator`).
 
@@ -73,24 +73,24 @@ Experience(
 
 Rolling per-component performance stats (replaces `SkillPerformanceRecord`):
 
-|| Field | Type | Description |
-||-------|------|-------------|
-|| `component_name` | `str` | Component identifier (skill, tool, subagent, toolkit) |
-|| `calls_total` | `int` | Total invocations |
-|| `calls_success` | `int` | Successful calls |
-|| `calls_failed` | `int` | Failed calls |
-|| `avg_duration_ms` | `float` | Average execution time |
-|| `avg_score` | `float` | Average feedback score |
-|| `p95_duration_ms` | `float` | P95 latency |
+| Field | Type | Description |
+|-------|------|-------------|
+| `component_name` | `str` | Component identifier (skill, tool, subagent, toolkit) |
+| `calls_total` | `int` | Total invocations |
+| `calls_success` | `int` | Successful calls |
+| `calls_failed` | `int` | Failed calls |
+| `avg_duration_ms` | `float` | Average execution time |
+| `avg_score` | `float` | Average feedback score |
+| `p95_duration_ms` | `float` | P95 latency |
 
 ### Adaptation Strategies
 
-|| Strategy | Description |
-||----------|-------------|
-|| `ucb1` | Upper Confidence Bound — explore/exploit based on confidence intervals |
-|| `epsilon_greedy` | Random exploration with epsilon probability |
-|| `softmax` | Boltzmann exploration over value estimates |
-|| `custom` | User-defined strategy |
+| Strategy | Description |
+|----------|-------------|
+| `ucb1` | Upper Confidence Bound — explore/exploit based on confidence intervals |
+| `epsilon_greedy` | Random exploration with epsilon probability |
+| `softmax` | Boltzmann exploration over value estimates |
+| `custom` | User-defined strategy |
 
 ## LearnPlugin ABC
 
