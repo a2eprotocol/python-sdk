@@ -176,5 +176,8 @@ learn.reward(component_name="my-tool", value=1.0, correlation_id="req_123")
 
 ### See also
 
-- [Cookbook Learn Plugin](../../../cookbook/README.md) — full example with server setup and react_agent integration
-- [Cookbook Learn README](../../../cookbook/servers/learn/README.md) — detailed plugin documentation
+- [Learning protocol messages](#protocol-messages-18-types) — the full request/response reference for the learn capability, including fields, directions, and wire examples
+- [Environment capability](/capabilities/env) — how agent actions are scored and turned into rewards that feed the learn experience buffer
+- [Protocol: Learning](/protocol-spec/learn) — the wire-level message definitions for learn/feedback, learn/experience, and learn/adapt
+
+The learn capability is the feedback engine behind A2E's self-improvement loop: environment or human feedback is recorded as experience, then `adapt()` or `refine()` turns that experience into policy updates you can gate, apply, and roll back.

@@ -559,5 +559,8 @@ Returns `None` if no rated_turn.
 
 ### See also
 
-- [Cookbook Learn Plugin](../../../cookbook/README.md) — full example with server setup and react_agent integration
-- [Cookbook Learn README](../../../cookbook/servers/learn/README.md) — detailed plugin documentation
+- [Learning capability overview](/capabilities/learn) — the client-facing API, usage patterns, and `adapt()` vs `refine()` guidance for this protocol
+- [Environment capability](/capabilities/env) — how the host scores agent actions and feeds rewards into `learn/experience`
+- [Message Types](/protocol-spec/message-types) — shared protocol conventions, framing, and error semantics used by all learn messages
+
+This page is the wire contract for the learn capability: 18 message types covering feedback, experience replay, component adaptation, and the refinable plan → review → apply → rollback workflow. Validation rules (score bounds, CORRECTIVE-requires-correction, apply-with-rollback) are enforced at the model layer described in the overview.
