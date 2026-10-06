@@ -12,6 +12,14 @@ from a2e.caps.env import (
     EnvCloseResponse,
     EnvStatePush,
     EnvObservation,
+    EnvDataPart,
+    EnvDataResetRequest,
+    EnvDataResetResponse,
+    EnvDataAddRequest,
+    EnvDataAddResponse,
+    EnvDataGetRequest,
+    EnvDataGetResponse,
+    DEFAULT_DATA_ROOT,
     ENV_TYPE_MAP,
 )
 from a2e.caps.env.protocol import MessageType as EnvMessageType
@@ -119,6 +127,70 @@ class EnvAPI:
             raise ConnectionError(f"Unexpected env close response: {type(resp)}")
 
         return EnvCloseResponse.model_validate(resp)
+
+    # -----------------------------------------------------
+    # DATA PLANE (task data; orthogonal to reset)
+    # -----------------------------------------------------
+    def data_reset(
+        self,
+        scope: str = "all",
+        data_root: str = "",
+        timeout: int = 300,
+    ) -> EnvDataResetResponse:
+        """Restore the data plane to its PRISTINE state.
+
+        Not an episode reset: this does not touch the episode. Use it between
+        tasks to drop the previous task's data and re-stage the baseline.
+        """
+        req = EnvDataResetRequest(scope=scope, data_root=data_root or DEFAULT_DATA_ROOT)
+        resp = self._c.rpc(req, timeout=timeout)
+
+        if not isinstance(resp, EnvDataResetResponse):
+            raise ConnectionError(f"Unexpected data reset response: {type(resp)}")
+        return resp
+
+    def data_add(
+        self,
+        parts: list,
+        data_root: str = "",
+        timeout: int = 1800,
+    ) -> EnvDataAddResponse:
+        """Stage task data before an episode.
+
+        ``parts`` entries are dicts (or EnvDataPart) of METADATA — src/dest/
+        checksum/size_bytes. Bytes are moved by the host on its own filesystem;
+        nothing large crosses the protocol. Default timeout is generous because
+        a multi-GB archive is extracted host-side.
+        """
+        if parts and isinstance(parts[0], dict):
+            parts = [EnvDataPart(**p) for p in parts]
+        req = EnvDataAddRequest(parts=parts, data_root=data_root or DEFAULT_DATA_ROOT)
+        resp = self._c.rpc(req, timeout=timeout)
+
+        if not isinstance(resp, EnvDataAddResponse):
+            raise ConnectionError(f"Unexpected data add response: {type(resp)}")
+        return resp
+
+    def data_get(
+        self,
+        query: str = "",
+        include_content: bool = False,
+        max_bytes: int = 1_048_576,
+        data_root: str = "",
+        timeout: int = 120,
+    ) -> EnvDataGetResponse:
+        """Read items back out of the data root (graded artifact collection)."""
+        req = EnvDataGetRequest(
+            query=query,
+            include_content=include_content,
+            max_bytes=max_bytes,
+            data_root=data_root or DEFAULT_DATA_ROOT,
+        )
+        resp = self._c.rpc(req, timeout=timeout)
+
+        if not isinstance(resp, EnvDataGetResponse):
+            raise ConnectionError(f"Unexpected data get response: {type(resp)}")
+        return resp
 
     # -----------------------------------------------------
     # PUSH (streaming updates)

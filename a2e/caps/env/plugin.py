@@ -32,6 +32,13 @@ from a2e.caps.env.protocol import (
     EnvObservation,
     EnvAction,
     EnvState,
+    DEFAULT_DATA_ROOT,
+    EnvDataAddRequest,
+    EnvDataAddResponse,
+    EnvDataGetRequest,
+    EnvDataGetResponse,
+    EnvDataResetRequest,
+    EnvDataResetResponse,
     ENV_TYPE_MAP
 )
 
@@ -94,6 +101,36 @@ class EnvPlugin(A2EPlugin):
         Optional cleanup hook.
         """
         pass
+
+    # ------------------------------------------------------------------
+    # DATA PLANE (optional)
+    #
+    # Deliberately separate from on_reset: these move data into and out of
+    # the env's data root (default /workspace/data) and are orthogonal to the
+    # episode lifecycle. Defaults are no-ops (NOT NotImplementedError) so an
+    # existing EnvPlugin subclass keeps working unchanged until it opts in.
+    # ------------------------------------------------------------------
+    def on_data_reset(self, scope: str = "all",
+                      data_root: str = DEFAULT_DATA_ROOT) -> Dict[str, Any]:
+        """Restore the data plane to its pristine state.
+
+        NOT a purge-to-empty and NOT an episode reset. A host with no baseline
+        corpus simply empties the root. Return ``{"restored": <int>, ...}``.
+        """
+        return {"restored": 0, "data_root": data_root}
+
+    def on_data_add(self, parts: List[Dict[str, Any]],
+                    data_root: str = DEFAULT_DATA_ROOT) -> Dict[str, Any]:
+        """Stage task data into the data root. Bytes are moved on the host's
+        filesystem, never through the protocol. Return ``{"added": <int>,
+        "errors": [...], "staged": [...]}``."""
+        return {"added": 0, "errors": [], "staged": [], "data_root": data_root}
+
+    def on_data_get(self, query: str = "", include_content: bool = False,
+                    max_bytes: int = 1_048_576,
+                    data_root: str = DEFAULT_DATA_ROOT) -> List[Dict[str, Any]]:
+        """Read items back out of the data root (graded artifact collection)."""
+        return []
 
     def reset(
         self,
@@ -340,7 +377,11 @@ class EnvPlugin(A2EPlugin):
                     obs=observation
                 )
             except Exception as error:
-                req_id = msg.get("id", "")
+                # NOTE: use the outer req_id (== msg.id). Previously this did
+                # `req_id = msg.get("id", "")`, which raises AttributeError on
+                # pydantic models; the `finally: return response` then swallowed
+                # the in-flight exception and returned the stale response=None,
+                # so no reply was ever sent → client-side silent RPC hang.
                 response = A2EError(**{
                     "req_id": req_id,
                     "code": EnvErrorCode.RUNTIME_ERROR,
@@ -362,7 +403,11 @@ class EnvPlugin(A2EPlugin):
                     "obs": obs
                 })
             except Exception as error:
-                req_id = msg.get("id", "")
+                # NOTE: use the outer req_id (== msg.id). Previously this did
+                # `req_id = msg.get("id", "")`, which raises AttributeError on
+                # pydantic models; the `finally: return response` then swallowed
+                # the in-flight exception and returned the stale response=None,
+                # so no reply was ever sent → client-side silent RPC hang.
                 response = A2EError(**{
                     "req_id": req_id,
                     "code": EnvErrorCode.RUNTIME_ERROR,
@@ -393,6 +438,90 @@ class EnvPlugin(A2EPlugin):
             finally:
                 self.audit_handle(msg, response, req_id, t0)
                 return response
+
+        # ─────────────────────────────
+        # Data plane — task-data lifecycle, orthogonal to env/reset above
+        # ─────────────────────────────
+        if isinstance(msg, EnvDataResetRequest):
+            try:
+                result = self.on_data_reset(
+                    scope=msg.scope,
+                    data_root=msg.data_root or DEFAULT_DATA_ROOT,
+                ) or {}
+                response = EnvDataResetResponse(**{
+                    "req_id": req_id,
+                    "ok": True,
+                    "restored": int(result.get("restored", 0)),
+                    "data_root": result.get("data_root", msg.data_root),
+                    "detail": str(result.get("detail", "")),
+                })
+            except Exception as error:
+                response = A2EError(**{
+                    "req_id": req_id,
+                    "code": EnvErrorCode.RUNTIME_ERROR,
+                    "message": str(error),
+                    "retryable": False
+                })
+            finally:
+                self.audit_handle(msg, response, req_id, t0)
+            return response
+
+        if isinstance(msg, EnvDataAddRequest):
+            try:
+                parts = [p.model_dump() if hasattr(p, "model_dump") else dict(p)
+                         for p in (msg.parts or [])]
+                result = self.on_data_add(
+                    parts=parts,
+                    data_root=msg.data_root or DEFAULT_DATA_ROOT,
+                ) or {}
+                errors = list(result.get("errors", []) or [])
+                response = EnvDataAddResponse(**{
+                    "req_id": req_id,
+                    "ok": not errors,
+                    "added": int(result.get("added", 0)),
+                    "errors": errors,
+                    # model_dump the staged entries: the executor re-validates
+                    # the response on serialization (G3).
+                    "staged": list(result.get("staged", []) or []),
+                })
+            except Exception as error:
+                response = A2EError(**{
+                    "req_id": req_id,
+                    "code": EnvErrorCode.RUNTIME_ERROR,
+                    "message": str(error),
+                    "retryable": False
+                })
+            finally:
+                self.audit_handle(msg, response, req_id, t0)
+            return response
+
+        if isinstance(msg, EnvDataGetRequest):
+            try:
+                items = self.on_data_get(
+                    query=msg.query or "",
+                    include_content=bool(msg.include_content),
+                    max_bytes=int(msg.max_bytes),
+                    data_root=msg.data_root or DEFAULT_DATA_ROOT,
+                ) or []
+                response = EnvDataGetResponse(**{
+                    "req_id": req_id,
+                    "ok": True,
+                    "items": list(items),
+                    "truncated": bool(msg.include_content and any(
+                        len(str(i.get("content", ""))) >= int(msg.max_bytes)
+                        for i in items if isinstance(i, dict)
+                    )),
+                })
+            except Exception as error:
+                response = A2EError(**{
+                    "req_id": req_id,
+                    "code": EnvErrorCode.RUNTIME_ERROR,
+                    "message": str(error),
+                    "retryable": False
+                })
+            finally:
+                self.audit_handle(msg, response, req_id, t0)
+            return response
 
         # Return invalid message
         response = A2EError(**{

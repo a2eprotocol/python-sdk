@@ -46,10 +46,10 @@ class SkillAPI:
                 f"Unexpected skill discover response: {type(resp)}"
             )
 
-        return [
-            SkillDefinition(**s)
-            for s in resp.skills
-        ]
+        # resp.skills is already List[SkillDefinition]; re-validating each
+        # element raised TypeError (pydantic needs a mapping, not a model) on
+        # every successful discover, which callers typically swallow.
+        return resp.skills
 
     # ─────────────────────────────
     # CALL SKILL

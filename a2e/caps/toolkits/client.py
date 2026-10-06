@@ -1,4 +1,3 @@
-import pdb
 from typing import List, Optional
 
 from a2e.core.client import A2EClient
@@ -49,11 +48,13 @@ class ToolkitAPI:
         name: str,
         schema: dict | None = None,
         timeout: int = 200,
-    ) -> ToolkitDefinition:
+    ) -> Optional[ToolkitDefinition]:
 
+        # Field names must match ToolkitConfigureRequest (toolkit_name/config);
+        # passing name=/schema= was silently dropped and configured nothing.
         req = ToolkitConfigureRequest(
-            name=name,
-            schema=schema or {},
+            toolkit_name=name,
+            config=schema or {},
         )
 
         resp = self._c.rpc(req, timeout=timeout)
@@ -63,10 +64,15 @@ class ToolkitAPI:
                 f"Unexpected toolkit configure response: {type(resp)}"
             )
 
-        if resp.error:
-            raise RuntimeError(f"Toolkit configure failed: {resp.error}")
+        # ToolkitConfigureResponse carries status/message, not error/toolkit.
+        if resp.status not in ("ok", "configured"):
+            raise RuntimeError(
+                f"Toolkit configure failed: {resp.status} ({resp.message or 'no detail'})"
+            )
 
-        return resp.toolkit
+        # Re-read the authoritative definition so the caller gets the
+        # host's post-configure state rather than a locally invented one.
+        return self.get(name, timeout=timeout)
 
     # -----------------------------------------------------
     # ENSURE CONFIGURED (idempotent helper)
@@ -76,7 +82,7 @@ class ToolkitAPI:
         name: str,
         schema: dict | None = None,
         timeout: int = 20,
-    ) -> ToolkitDefinition:
+    ) -> Optional[ToolkitDefinition]:
         """
         Idempotent helper:
         - checks if already configured

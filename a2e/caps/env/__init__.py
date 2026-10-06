@@ -10,7 +10,15 @@ from a2e.caps.env.protocol import (
     EnvCloseResponse,
     EnvObservation,
     EnvStatePush,
-    EnvState
+    EnvState,
+    DEFAULT_DATA_ROOT,
+    EnvDataPart,
+    EnvDataResetRequest,
+    EnvDataResetResponse,
+    EnvDataAddRequest,
+    EnvDataAddResponse,
+    EnvDataGetRequest,
+    EnvDataGetResponse,
 )
 from a2e.caps.env.plugin import (
     EnvPlugin
@@ -29,5 +37,13 @@ __all__ = [
     "EnvStatePush",
     "EnvObservation",
     "EnvState",
+    "DEFAULT_DATA_ROOT",
+    "EnvDataPart",
+    "EnvDataResetRequest",
+    "EnvDataResetResponse",
+    "EnvDataAddRequest",
+    "EnvDataAddResponse",
+    "EnvDataGetRequest",
+    "EnvDataGetResponse",
     "ENV_TYPE_MAP"
 ]

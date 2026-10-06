@@ -1,5 +1,5 @@
 from enum import Enum
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from typing import Dict, List, Any, Optional
 from a2e.caps.base import A2EMessage
 
@@ -58,6 +58,12 @@ class ToolkitConfigureRequest(A2EMessage):
 
     Configure / initialize a toolkit instance with schema + credentials.
     """
+    # extra="forbid": this request previously accepted (and silently dropped)
+    # misspelled kwargs such as name=/schema= instead of toolkit_name=/config=,
+    # so a misconfigured toolkit was reported as configured against an empty
+    # payload. Reject unknown fields so the caller fails loudly instead.
+    model_config = ConfigDict(extra="forbid")
+
     type: MessageType = MessageType.TOOLKIT_CONFIGURE_REQ
 
     session_id: str = ""

@@ -92,7 +92,7 @@ class ToolkitPlugin(A2EPlugin):
 
         if isinstance(msg, ToolkitConfigureRequest):
             try:
-                return self._configure_toolkit(msg)
+                response = self._configure_toolkit(msg)
             except Exception as error:
                 response = A2EError(**{
                     "req_id": req_id,
@@ -102,7 +102,12 @@ class ToolkitPlugin(A2EPlugin):
                 })
             finally:
                 self.audit_handle(msg, response, req_id, t0)
-                return response
+            # NOTE: assign in the try and return AFTER the finally. The previous
+            # `return self._configure_toolkit(msg)` inside the try was discarded
+            # by `finally: return response`, which always returned the stale
+            # `response` (None on success) — so the executor sent nothing and
+            # the client saw a silent RPC timeout on every configure.
+            return response
 
         # Return invalid message
         response = A2EError(**{

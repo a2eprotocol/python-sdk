@@ -161,7 +161,11 @@ class SkillPlugin(A2EPlugin):
                     skills=skills,
                 )
             except Exception as error:
-                req_id = msg.get("id", "")
+                # NOTE: use the outer req_id (== msg.id). Previously this did
+                # `req_id = msg.get("id", "")`, which raises AttributeError on
+                # pydantic models; the `finally: return response` then swallowed
+                # the in-flight exception and returned the stale response=None,
+                # so no reply was ever sent → client-side silent RPC hang.
                 response = A2EError(**{
                     "req_id": req_id,
                     "code": SkillErrorCode.RUNTIME_ERROR,

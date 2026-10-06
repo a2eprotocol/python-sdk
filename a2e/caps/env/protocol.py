@@ -68,6 +68,19 @@ class MessageType(str, Enum):
     ENV_EXP_LIST_REQ = "env/exp/list/req"
     ENV_EXP_LIST_RESP = "env/exp/list/resp"
 
+    # data plane — the task-data lifecycle, ORTHOGONAL to env/reset.
+    # reset() rebuilds an episode; these move bytes in and out of the env's
+    # data root (default /workspace/data). A host may reset an episode without
+    # touching data, and restore data without starting an episode.
+    ENV_DATA_RESET_REQ = "env/data/reset/req"
+    ENV_DATA_RESET_RESP = "env/data/reset/resp"
+
+    ENV_DATA_ADD_REQ = "env/data/add/req"
+    ENV_DATA_ADD_RESP = "env/data/add/resp"
+
+    ENV_DATA_GET_REQ = "env/data/get/req"
+    ENV_DATA_GET_RESP = "env/data/get/resp"
+
 
 class EnvErrorCode(str, Enum):
     RUNTIME_ERROR = "runtime_error"
@@ -250,6 +263,7 @@ class EnvCloseRequest(A2EMessage):
 class EnvCloseResponse(A2EMessage):
     type: MessageType = MessageType.ENV_CLOSE_RESP
 
+    req_id: str = ""
     closed: bool = True
 
 
@@ -332,6 +346,126 @@ class EnvExpListResponse(A2EMessage):
     episodes: List[dict] = []
 
 
+# ─────────────────────────────────────────────
+# DATA PLANE
+#
+# The task-data lifecycle, deliberately separate from env/reset. ``reset``
+# starts a new EPISODE; these three move data into and out of the env's data
+# root (default ``/workspace/data``). They are orthogonal: a host can reset an
+# episode without touching data, and can restore data without starting one.
+#
+# Payloads carry METADATA ONLY — never bytes. At multi-GB the bytes are moved
+# by the host doing a local filesystem operation inside the container, so
+# nothing large is ever buffered in a protocol message.
+# ─────────────────────────────────────────────
+
+DEFAULT_DATA_ROOT = "/workspace/data"
+
+
+class EnvDataPart(BaseModel):
+    """One staged item. Bytes live on the host filesystem, never on the wire."""
+    model_config = ConfigDict(extra="allow")
+
+    src: str = ""
+    """Host-side source the host copies from (bind-mounted path, archive...)."""
+
+    dest: str = ""
+    """Path relative to the data root. Empty means the part's own name."""
+
+    uri: str = ""
+    """Logical identifier, recorded and echoed back. Not dereferenced by the SDK."""
+
+    checksum: str = ""
+    """``sha256:<hex>`` verified by the host after staging. Empty skips verification."""
+
+    size_bytes: Optional[int] = None
+    mime: str = ""
+
+
+class EnvDataResetRequest(A2EMessage):
+    """Agent → Host: restore the data plane to its PRISTINE state.
+
+    This is NOT an episode reset and NOT a purge-to-empty. The host restores
+    whatever it considers pristine (typically: clear the data root, then
+    re-stage the env's baseline corpus). A host with no baseline simply empties
+    the root and reports ``restored=0``.
+    """
+    type: MessageType = MessageType.ENV_DATA_RESET_REQ
+
+    scope: str = "all"
+    """``all`` (default) restores the whole data root; ``baseline`` re-stages
+    only the env's pristine corpus."""
+
+    data_root: str = DEFAULT_DATA_ROOT
+
+
+class EnvDataResetResponse(A2EMessage):
+    """Host → Agent: data plane restored. ``req_id`` is required for RPC match."""
+    type: MessageType = MessageType.ENV_DATA_RESET_RESP
+    req_id: str = ""
+
+    ok: bool = True
+    restored: int = 0
+    """Number of items re-staged to reach the pristine state."""
+
+    data_root: str = DEFAULT_DATA_ROOT
+    detail: str = ""
+
+
+class EnvDataAddRequest(A2EMessage):
+    """Agent → Host: stage task data into the data root before an episode."""
+    type: MessageType = MessageType.ENV_DATA_ADD_REQ
+
+    parts: List[EnvDataPart] = Field(default_factory=list)
+    data_root: str = DEFAULT_DATA_ROOT
+
+
+class EnvDataAddResponse(A2EMessage):
+    """Host → Agent: what was staged. Failures are per-part, never fatal."""
+    type: MessageType = MessageType.ENV_DATA_ADD_RESP
+    req_id: str = ""
+
+    ok: bool = True
+    added: int = 0
+    errors: List[str] = Field(default_factory=list)
+    staged: List[Dict[str, Any]] = Field(default_factory=list)
+    """Echo of each staged item (uri/dest/size_bytes/checksum) for the record."""
+
+
+class EnvDataGetRequest(A2EMessage):
+    """Agent → Host: read items back OUT of the data root (agent artifacts).
+
+    Used for graded collection — files the agent produced under the data root.
+    The host lists matching entries; ``content`` is only populated when the
+    caller asks for it AND the item is small enough to inline.
+    """
+    type: MessageType = MessageType.ENV_DATA_GET_REQ
+
+    query: str = ""
+    """Glob/substring relative to the data root. Empty lists everything."""
+
+    include_content: bool = False
+    """Inline file contents. The host MUST refuse above its own size cap."""
+
+    max_bytes: int = 1_048_576
+    """Per-item ceiling when ``include_content`` is set (default 1 MiB)."""
+
+    data_root: str = DEFAULT_DATA_ROOT
+
+
+class EnvDataGetResponse(A2EMessage):
+    """Host → Agent: items read back from the data root."""
+    type: MessageType = MessageType.ENV_DATA_GET_RESP
+    req_id: str = ""
+
+    ok: bool = True
+    items: List[Dict[str, Any]] = Field(default_factory=list)
+    """Each: ``{uri, dest, size_bytes, checksum, mime, content?}``."""
+
+    truncated: bool = False
+    detail: str = ""
+
+
 # ---------------------------------------------------------------------------
 # TYPE REGISTRY (plug into your decoder)
 # ---------------------------------------------------------------------------
@@ -373,5 +507,13 @@ ENV_TYPE_MAP = {
     MessageType.ENV_EXP_LIST_RESP: EnvExpListResponse,
 
     # state push
-    MessageType.ENV_STATE_PUSH: EnvStatePush
+    MessageType.ENV_STATE_PUSH: EnvStatePush,
+
+    # data plane (task-data lifecycle; orthogonal to env/reset)
+    MessageType.ENV_DATA_RESET_REQ: EnvDataResetRequest,
+    MessageType.ENV_DATA_RESET_RESP: EnvDataResetResponse,
+    MessageType.ENV_DATA_ADD_REQ: EnvDataAddRequest,
+    MessageType.ENV_DATA_ADD_RESP: EnvDataAddResponse,
+    MessageType.ENV_DATA_GET_REQ: EnvDataGetRequest,
+    MessageType.ENV_DATA_GET_RESP: EnvDataGetResponse,
 }
