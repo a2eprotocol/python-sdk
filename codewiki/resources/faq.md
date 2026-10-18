@@ -200,6 +200,18 @@ Use the `mcp` capability. Configure an MCP server connection, and its tools are 
 
 ---
 
+## Environments & Data
+
+### How do I give my environment large task data (files, datasets)?
+
+Use the env **data plane** — `env.data_add(parts=[...])`. It carries metadata only (paths, checksums, sizes); your host copies the actual bytes locally (bind-mount, archive extraction), so a multi-GB corpus stages without crossing the wire. Read results back with `env.data_get(...)`. Data operations are orthogonal to `env.reset`: resetting an episode never touches data. See [Environment](/capabilities/env#data-plane).
+
+### What does `data_reset` actually do — does it delete everything?
+
+No. `data_reset` restores the data root to its **pristine** state: the host clears it and re-stages whatever baseline corpus it defines. It is not a purge-to-empty and not an episode reset — a host with no baseline simply empties the root and reports `restored: 0`. This is what lets consecutive tasks share one environment without leaking data from one to the next.
+
+---
+
 ## Error Handling
 
 ### How should I handle errors?

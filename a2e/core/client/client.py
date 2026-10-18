@@ -149,6 +149,16 @@ class A2EClient:
 
         try:
             line = self.encode(msg)
+            try:
+                (getattr(self, "logger", None) or logging.getLogger("a2e.client.send")).info(  # send-probe
+                    "send-probe class=%s type=%s keys=%s encoded_len=%s",
+                    type(msg).__name__,
+                    (msg.to_dict().get("type") if hasattr(msg, "to_dict") else "?"),
+                    list(msg.to_dict()) if hasattr(msg, "to_dict") else "?",
+                    len(line),
+                )
+            except Exception:
+                pass
             self._transport.send(line)
         except Exception as e:
             self.logger.exception("[client] send failed")
@@ -165,6 +175,24 @@ class A2EClient:
             return
 
         req_id = getattr(msg, "req_id", None)
+        if not req_id:
+            # wire-fallback req_id (2026-10-17): decode() -> cls.model_validate
+            # silently DROPS 'req_id' for a registry class whose schema predates
+            # it, so the pending match misses while the raw JSON carries it
+            # verbatim ("on-msg ... req_id=None hit=False pending_n=1"). Match
+            # against the wire, not the typed view.
+            try:
+                req_id = (json.loads(raw) or {}).get("req_id")
+            except Exception:
+                req_id = None
+        try:  # match truth: pending lookup result, not an assumption
+            self.logger.info(
+                "on-msg type=%s req_id=%s hit=%s pending_n=%s",
+                getattr(msg, "type", "?"), req_id, req_id in self._pending,
+                len(self._pending),
+            )
+        except Exception:
+            pass
 
         # ── Pending RPC match ─────────────────
         if req_id and req_id in self._pending:
@@ -303,6 +331,21 @@ class A2EClient:
             raise ValueError("Missing 'type' field")
 
         cls = self._type_registry.get(msg_type)
+        if cls is None and isinstance(msg_type, str) and msg_type.startswith("acp/"):
+            # registry-alias acp/ (2026-10-17): fake/sandbox answers
+            # "acp/handshake/resp" while the registry keys "handshake/resp"
+            # (sdk's own tests zero both spellings), so decode fell to the
+            # generic wrapper, _handshake()'s isinstance check failed, and a
+            # PERFECTLY GOOD ok=True handshake raised ConnectionError with
+            # `Handshake failed: type='acp/handshake/resp' ...` -- the most
+            # misleading message of the entire investigation.
+            cls = self._type_registry.get(msg_type[4:])
+            if cls is not None:
+                # The model's own `type` enum validates the SAME literal and
+                # rejects 'acp/handshake/resp' ("Input should be
+                # 'handshake/req', 'handshake/resp', ..."), so normalise the
+                # payload, not just the lookup.
+                data["type"] = msg_type[4:]
 
         # 🔥 Fallback: unknown message → generic wrapper
         if not cls:

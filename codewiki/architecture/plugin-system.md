@@ -44,12 +44,17 @@ classDiagram
         +on_reset(seed, options) EnvState
         +on_step(episode_id, action) tuple
         +on_close()
+        +on_data_reset(scope, data_root) Dict
+        +on_data_add(parts, data_root) Dict
+        +on_data_get(query, include_content, max_bytes, data_root) List
     }
 
     A2EPlugin <|-- ToolPlugin
     A2EPlugin <|-- MemoryPlugin
     A2EPlugin <|-- EnvPlugin
 ```
+
+**Optional hooks default to safe no-ops.** Capability hooks added after a plugin already shipped are given concrete no-op bodies (not `@abstractmethod`) so existing subclasses keep working unchanged. `EnvPlugin`'s data-plane hooks are the canonical example: `on_data_reset` returns `{"restored": 0}`, `on_data_add` returns `{"added": 0, "errors": [], "staged": []}`, and `on_data_get` returns `[]` — a plugin that never overrides them simply has no data plane.
 
 ### Class-Level Attributes
 

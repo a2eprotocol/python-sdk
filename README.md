@@ -46,6 +46,7 @@ memory/store/req   → Store a value in memory
 memory/recall/req  → Retrieve a value from memory
 proc/spawn/req     → Spawn a long-running subprocess
 env/step/req       → Take an action in an RL environment
+env/data/add/req   → Stage task data (metadata only) into an env
 learn/feedback/req → Provide feedback for adaptation
 chain/execute/req  → Run a DAG pipeline
 mcp/call_tool/req  → Proxy a call to an MCP server
@@ -90,7 +91,7 @@ A2E is organized into three clean layers:
 |-----------|---------|--------|
 | `tools` | Call named functions with structured input/output | `ToolPlugin` |
 | `memory` | Three-tier storage: working, episodic, semantic | `MemoryPlugin` |
-| `env` | RL environment: reset, step, observe, reward | `EnvPlugin` |
+| `env` | RL environment: reset, step, observe, reward + task-data plane (add/get/reset) | `EnvPlugin` |
 | `proc` | Manage long-running subprocesses | `ProcPlugin` |
 | `learn` | Feedback, experience storage, and adaptation | `LearnPlugin` |
 | `skills` | Named, versioned, sandboxed execution units | `SkillPlugin` |
@@ -284,7 +285,7 @@ Full documentation is available at [a2eprotocol.github.io/docs](https://a2eproto
 ### Capabilities
 - [Tools](codewiki/capabilities/tools.md) — Named callable functions with JSON Schema I/O
 - [Memory](codewiki/capabilities/memory.md) — Working, episodic, and semantic tiers
-- [Environment](codewiki/capabilities/env.md) — RL environments: reset, step, observe
+- [Environment](codewiki/capabilities/env.md) — RL environments: reset, step, observe, and the task-data plane
 - [Processes](codewiki/capabilities/proc.md) — Subprocess spawning, I/O, signaling
 - [Learning](codewiki/capabilities/learn.md) — Feedback, experience, adaptation
 - [Skills](codewiki/capabilities/skills.md) — Named, versioned, sandboxed execution
@@ -304,7 +305,7 @@ Full documentation is available at [a2eprotocol.github.io/docs](https://a2eproto
 
 ### Cookbook
 - [Writing a Plugin](codewiki/cookbook/writing-a-plugin.md) — Step-by-step plugin development
-- [Environment Agent Loop](codewiki/cookbook/env-agent-loop.md) — RL step loop patterns
+- [Environment Agent Loop](codewiki/cookbook/env-agent-loop.md) — RL step loop + per-task data staging patterns
 - [Chain Pipeline](codewiki/cookbook/chain-pipeline.md) — Building DAG pipelines
 - [MCP Integration](codewiki/cookbook/mcp-integration.md) — Connecting MCP servers
 - [MCP Bridge (Plugin & Client)](codewiki/cookbook/mcp-bridge.md) — Full MCP bridge implementation

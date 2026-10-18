@@ -104,6 +104,22 @@ class HTTPTransport(BaseTransport):
             resp.raise_for_status()
             self._session_id = resp.json()["session_id"]
 
+        # fail-loud: an absent session id is a Silently Unroutable stream --
+        # `requests` DROPS headers whose value is None, the server then reads
+        # sid="" (observed 2026-10-17 as `[fake] SSE attach sid=`), keys its
+        # reply queue under "" and every rpc() waits until TimeoutError while
+        # every endpoint still answers 200. Never send that state: fall back to
+        # a real /session fetch, then refuse to start rather than degrade.
+        if not self._session_id:
+            resp = self._http.post(f"{self._base_url}/session")
+            resp.raise_for_status()
+            self._session_id = resp.json().get("session_id")
+        if not self._session_id:
+            raise RuntimeError(
+                f"transport start: no session id for {self._base_url}/session; "
+                f"refusing to open an unroutable stream (replies would queue "
+                f"under sid='' and every rpc would time out)"
+            )
         self._http.headers.update({
             "Content-Type": "text/plain",
             "Accept": "text/event-stream",
@@ -176,6 +192,10 @@ class HTTPTransport(BaseTransport):
 
             for attempt in range(1, self._max_retries + 1):
                 try:
+                    self.logger.info(
+                        "send-echo url=%s n=%s head=%r",
+                        self._send_url, len(msg or ""), (msg or "")[:80],
+                    )
                     resp = self._http.post(
                         self._send_url,
                         data=msg,
@@ -223,11 +243,15 @@ class HTTPTransport(BaseTransport):
 
         while not self._stop_evt.is_set():
             try:
+                _hp = getattr(self, "_http", None)
+                _sid = (getattr(self, "_session_id", None) or
+                        (_hp.headers.get("X-Session-Id") if _hp else None) or "")
                 with self._http.get(
                     self._stream_url,
                     stream=True,
                     timeout=(self._connect_timeout, None),
-                    headers={"Accept": "text/event-stream"},
+                    headers={"Accept": "text/event-stream", "X-Session-Id": _sid},  # sid-hygiene: an unkeyed reader consumes queue '' while replies
+                                       # queue under the real session sid -> silent RPC timeout,
                 ) as resp:
 
                     resp.raise_for_status()
@@ -260,6 +284,10 @@ class HTTPTransport(BaseTransport):
             pass
 
     def _dispatch(self, msg: str):
+        try:  # receipt truth: did the SSE parse bridge fire at all?
+            self.logger.info("xport-rcv head=%r", (msg or "")[:90])
+        except Exception:
+            pass
         if self._handler:
             try:
                 self._handler(msg)
@@ -285,7 +313,9 @@ class HTTPTransport(BaseTransport):
     def _parse_sse(resp: requests.Response) -> Iterator[str]:
         pending: list[str] = []
 
-        for raw in resp.iter_lines(decode_unicode=True):
+        # chunk_size=1 SSE-safe: requests default iter_lines reads 512B
+        # before yielding, frames are ~263B, stream never EOFs -> stall.
+        for raw in resp.iter_lines(decode_unicode=True, chunk_size=1):
             if raw is None:
                 continue
 

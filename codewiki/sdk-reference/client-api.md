@@ -125,8 +125,8 @@ When an inbound message has no matching `req_id` in the pending or event maps, t
 Capability API classes (e.g. `EnvAPI`, `ProcsAPI`) use this internally. Direct usage is rarely needed but available:
 
 ```python
-client.register_push_handler("env/state_push", lambda msg: print(f"Push: {msg.state_delta}"))
-client.unregister_push_handler("env/state_push", my_handler)
+client.register_push_handler("env/state/push", lambda msg: print(f"Push: {msg.state_delta}"))
+client.unregister_push_handler("env/state/push", my_handler)
 ```
 
 ### Incoming Message Routing

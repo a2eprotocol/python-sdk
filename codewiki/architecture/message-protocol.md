@@ -76,6 +76,16 @@ RPC requests are correlated by `req_id` — the client generates a UUID, the ser
 
 Events are delivered before the final response, enabling progressive UI updates.
 
+## Capability Data Lifecycles
+
+Most message types are RPC request/response pairs correlated by `req_id`. Some capabilities additionally expose an **orthogonal data lifecycle** — a set of messages that move task data but never carry the bytes themselves. The canonical example is the env data plane (`env/data/{reset,add,get}`):
+
+- Requests carry **metadata only** — paths, checksums, sizes, content types.
+- Bytes are moved by the host on its own filesystem (bind-mounted paths, archive extraction), so multi-GB corpora never traverse the protocol.
+- The data lifecycle is independent of the operation lifecycle it belongs to: an episode can be reset without touching data, and the data root restored without starting an episode.
+
+This keeps the wire contract small and stable while letting hosts stage arbitrarily large inputs and collect arbitrarily large agent artifacts.
+
 ## Error Handling
 
 `A2EError` is returned when a message cannot be processed:

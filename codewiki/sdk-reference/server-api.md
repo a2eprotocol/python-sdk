@@ -110,6 +110,15 @@ def _run_plugin(self, plugin, message):
 
 This ensures the client's `_on_message` can route the response to the correct pending RPC.
 
+### Handler Return Contract
+
+A plugin's `handle()` must **return** its response (or `None` to send nothing). The executor injects `req_id` and sends whatever is returned. Two failure modes silently starve the client and cause an RPC hang until timeout:
+
+1. **Returning from a `try` whose `finally` returns a different variable.** If the `finally` clause does `return response` and `response` was never assigned on the success path, the real return value is discarded and `None` is sent — no reply ever reaches the client. Capability plugins now assign the response inside the `try` and `return` it *after* the `finally` block.
+2. **Reading `msg.get("id")` inside an error handler.** `msg` is a decoded Pydantic model, not a dict, so `msg.get(...)` raises `AttributeError` — which is itself swallowed by the surrounding `finally`, again leaving no response. Use the outer `req_id` (which equals `msg.id`) instead.
+
+The invariant: **every request must produce exactly one returned response or `A2EError`.** A handler must never swallow an exception and return `None`, or the client hangs instead of failing loudly.
+
 ### Capability Negotiation
 
 ```python

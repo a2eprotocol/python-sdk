@@ -6,6 +6,26 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ---
 
+## [0.1.3] — 2026-10-06
+
+### Added
+
+**Environment — Data Plane (`env/data/*`)**
+- Six new message types for the orthogonal task-data lifecycle: `env/data/reset/{req,resp}`, `env/data/add/{req,resp}`, `env/data/get/{req,resp}`
+- `EnvDataPart` — a staged item carrying **metadata only** (`src`, `dest`, `uri`, `checksum`, `size_bytes`, `mime`); bytes are moved host-side, so multi-GB corpora never traverse the protocol
+- `DEFAULT_DATA_ROOT` (`/workspace/data`)
+- `EnvPlugin` data-plane hooks — `on_data_reset(scope, data_root)`, `on_data_add(parts, data_root)`, `on_data_get(query, include_content, max_bytes, data_root)`. Defaults are safe no-ops (not `NotImplementedError`) so existing subclasses are unaffected
+- `EnvAPI.data_reset()`, `EnvAPI.data_add()`, `EnvAPI.data_get()` client methods
+- `EnvCloseResponse.req_id` — closes now correlate via `req_id` like every other RPC response
+- Regression suite `a2e/tests/unittest/test_env_data_plane.py`
+
+### Fixed
+
+- **Silent RPC hangs in capability handlers.** `EnvPlugin`, `SkillPlugin`, and `ToolkitPlugin` could return the stale `response=None` from a `finally:` block on the success path, so the executor sent nothing and the client hung until timeout. Handlers now assign the response and return it after the `finally`. The same block read `msg.get("id")` (an `AttributeError` on Pydantic models) instead of the outer `req_id`.
+- **`SkillAPI.discover()`** re-validated already-typed `SkillDefinition` models (`SkillDefinition(**model)` → `TypeError`), raising on every successful discover. It now returns `resp.skills` directly.
+- **`ToolkitAPI.configure()`** passed `name=`/`schema=`, which `ToolkitConfigureRequest` silently dropped — it now passes `toolkit_name=`/`config=`, checks `status`, and re-reads the authoritative definition via `get()`.
+- **`ToolkitConfigureRequest`** now declares `extra="forbid"` so misspelled kwargs fail loudly instead of configuring an empty payload.
+
 ## [0.1.2] — 2026-06-01
 
 ### Removed

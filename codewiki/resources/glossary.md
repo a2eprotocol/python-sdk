@@ -81,6 +81,12 @@ A unique identifier (`id` field) assigned to every request message. The correspo
 ### DAG
 **Directed Acyclic Graph** — the structure used by the `chains` capability. Nodes have directional edges with no cycles, enabling parallel and conditional execution.
 
+### Data Plane
+The env capability's **task-data lifecycle** (`env/data/reset`, `env/data/add`, `env/data/get`), orthogonal to the episode lifecycle. Messages carry **metadata only** — paths, checksums, sizes — while the host moves the actual bytes on its own filesystem, so multi-GB corpora never cross the wire. `data_reset` restores the data root to pristine (not a purge-to-empty). See [Environment](/capabilities/env#data-plane).
+
+### Data Root
+The environment-side directory the env data plane reads from and writes to (default `/workspace/data`). `env/data/add` stages inputs into it; `env/data/get` reads agent artifacts back out of it.
+
 ### DirectTransport
 An in-process transport (`a2e.core.transports.direct.DirectTransport`) using cross-wired queues. Used for local testing, RL step loops, and in-process communication without network overhead.
 

@@ -35,7 +35,7 @@
 | `memory/forget/req` | `MemoryForgetRequest` | Delete from memory |
 | `memory/forget/resp` | `MemoryForgetResponse` | Deletion count |
 
-### Environment (14)
+### Environment (25)
 
 | Type String | Model | Description |
 |-------------|-------|-------------|
@@ -47,15 +47,23 @@
 | `env/observe/resp` | `EnvObserveResponse` | Observation |
 | `env/close/req` | `EnvCloseRequest` | Close environment |
 | `env/close/resp` | `EnvCloseResponse` | Close result |
-| `env/spaces/req` | `EnvSpacesRequest` | Get action/state spaces |
-| `env/spaces/resp` | `EnvSpacesResponse` | Space schemas |
+| `env/space/req` | `EnvSpacesRequest` | Get action/state spaces |
+| `env/space/resp` | `EnvSpacesResponse` | Space schemas |
 | `env/render/req` | `EnvRenderRequest` | Render environment |
 | `env/render/resp` | `EnvRenderResponse` | Rendered output |
 | `env/plan/req` | `EnvPlanRequest` | Get affordances |
 | `env/plan/resp` | `EnvPlanResponse` | Suggested actions |
 | `env/batch_step/req` | `EnvBatchStepRequest` | Parallel steps |
 | `env/batch_step/resp` | `EnvBatchStepResponse` | Batch results |
-| `env/state_push` | `EnvStatePush` | Server-initiated push |
+| `env/exp/list/req` | `EnvExpListRequest` | List recorded transitions |
+| `env/exp/list/resp` | `EnvExpListResponse` | Recorded experiences |
+| `env/state/push` | `EnvStatePush` | Server-initiated push |
+| `env/data/reset/req` | `EnvDataResetRequest` | Restore data root to pristine |
+| `env/data/reset/resp` | `EnvDataResetResponse` | Data restore result |
+| `env/data/add/req` | `EnvDataAddRequest` | Stage task data (metadata only) |
+| `env/data/add/resp` | `EnvDataAddResponse` | Staged items |
+| `env/data/get/req` | `EnvDataGetRequest` | Read artifacts back |
+| `env/data/get/resp` | `EnvDataGetResponse` | Artifact items |
 
 ### Processes (8)
 
@@ -145,4 +153,4 @@
 | `mcp/sampling/req` | LLM sampling request (server→agent) |
 | `mcp/sampling/resp` | LLM sampling response (agent→server) |
 
-## Total: 79 message types across 10 namespaces
+## Total: 87 message types across 10 namespaces
