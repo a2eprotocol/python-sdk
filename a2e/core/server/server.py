@@ -15,6 +15,7 @@ Transport: line-delimited JSON over stdin/stdout (or any stream pair).
 """
 
 from __future__ import annotations
+import os
 
 import pdb
 import threading
@@ -35,6 +36,55 @@ from a2e.schema import (
     A2EHostConfig
 )
 
+
+
+# ── A2E WIRE TRACE (env side) ────────────────────────────────────────────
+# The env sandbox is where every A2E message actually LANDS, but its stdout
+# used to carry uvicorn access lines only ("POST /send 200") — no message
+# type, no ids, nothing that lets an operator say WHICH exchange failed. The
+# agent side already logs its own send/receive; this is the symmetric trace on
+# the environment side, at the ONE choke point every message crosses (the HTTP
+# /send handler and the /stream response stream).
+#
+# Bounded by construction: the digest keeps the message TYPE, its id and a
+# short slice of the interesting fields, never the whole payload. Disable with
+# A2E_WIRE_TRACE=0.
+_WIRE_FIELDS = ("step", "episode_id", "action", "observation", "reward",
+                "done", "error", "tool", "command", "status", "success")
+_WIRE_DIGEST_CHARS = 160
+
+
+def _wire_trace_enabled() -> bool:
+    return str(os.environ.get("A2E_WIRE_TRACE", "1")).strip() not in (
+        "0", "false", "False", "")
+
+
+def _trace_wire(logger, direction: str, raw, session_id: str = "") -> None:
+    """Log one A2E message, both directions, bounded. Never raises."""
+    try:
+        if not _wire_trace_enabled():
+            return
+        import json as _json
+        text = raw.decode("utf-8", "replace") if isinstance(
+            raw, (bytes, bytearray)) else str(raw)
+        mtype, mid, parts = "?", "", []
+        try:
+            data = _json.loads(text)
+            if isinstance(data, dict):
+                mtype = str(data.get("type") or "?")
+                mid = str(data.get("id") or "")[:12]
+                for key in _WIRE_FIELDS:
+                    if key in data and data[key] not in (None, "", [], {}):
+                        value = str(data[key]).replace("\n", " ")
+                        parts.append("%s=%s" % (
+                            key, value[:_WIRE_DIGEST_CHARS]))
+        except Exception:  # noqa: BLE001 — not JSON: log the head only
+            parts.append("raw=" + text[:_WIRE_DIGEST_CHARS])
+        logger.info("[a2e-wire] %-3s type=%s id=%s session=%s bytes=%d %s",
+                    direction, mtype, mid or "-", session_id or "-",
+                    len(text), " ".join(parts))
+    except Exception:  # noqa: BLE001 — tracing must never break the protocol
+        pass
 
 class A2EServer:
     """
@@ -115,6 +165,7 @@ class A2EServer:
 
             body = await request.body()
             msg = body.decode()
+            _trace_wire(self.logger, "in", msg, sid)
             await session.transport.deliver(msg)
             return {"ok": True}
 
@@ -135,6 +186,7 @@ class A2EServer:
                         self.logger.info(f"[session] disconnected {sid}")
                         return
 
+                    _trace_wire(self.logger, "out", msg, sid)
                     yield f"data: {msg}\n\n"
 
             return StreamingResponse(

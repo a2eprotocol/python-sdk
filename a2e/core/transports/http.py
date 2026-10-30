@@ -11,6 +11,36 @@ from a2e.core.transports.base import (
 MessageHandler = Callable[[str], None]
 
 
+def _is_gone(exc: BaseException) -> bool:
+    """True when the failure means the PEER IS GONE (404 / 410).
+
+    A 404 is not "the route is missing" -- for these hosts it is "the
+    sandbox behind this url no longer exists". The env is reaped or
+    replaced by the pool, and the old url answers 404 forever.
+
+    Retrying it forever saturates the event loop: measured live
+    2026-10-20, the arena logged 223 SSE errors in 3 minutes against
+    terminated env sandboxes and stopped provisioning its env pool
+    entirely -- so a rollout stalled at stage 0 with no env and no
+    agent.
+    """
+    resp = getattr(exc, "response", None)
+    # requests' HTTPError carries the response; its status is
+    # `status_code` (an aiohttp/httpx error would use `status`).
+    status = getattr(resp, "status_code", None)
+    if status is None:
+        status = getattr(resp, "status", None)
+    if status is None:
+        status = getattr(exc, "status", None)
+    if status is None:
+        status = getattr(exc, "status_code", None)
+    try:
+        status = int(status) if status is not None else None
+    except (TypeError, ValueError):
+        status = None
+    return status in (404, 410)
+
+
 class HTTPTransport(BaseTransport):
     """
     HTTP + SSE transport for A2E.
@@ -268,6 +298,26 @@ class HTTPTransport(BaseTransport):
             except Exception as exc:
                 if self._stop_evt.is_set():
                     return
+
+                # A GONE host is TERMINAL, not retryable. A 404 means the
+                # peer no longer exists -- the env sandbox was reaped or
+                # replaced -- and retrying it forever starves the event
+                # loop and blocks every other request the process makes.
+                #
+                # Measured live 2026-10-20: the arena logged 223 SSE
+                # errors in 3 MINUTES against terminated env sandboxes,
+                # its event loop was saturated, and it stopped provisioning
+                # the env pool entirely -- so the rollout stalled at
+                # stage 0 with no env and no agent.
+                #
+                # So: 404 (and 410) end the reader. Other failures keep
+                # the bounded backoff.
+                if _is_gone(exc):
+                    self.logger.warning(
+                        "[http-transport] SSE error: %s → the peer is gone; "
+                        "not retrying", exc,
+                    )
+                    break
 
                 self.logger.warning(
                     "[http-transport] SSE error: %s → retrying in %.1fs",
